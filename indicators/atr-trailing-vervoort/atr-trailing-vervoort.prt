@@ -1,13 +1,14 @@
 REM ============================================================
-REM ATR TRAILING VERVOORT (indicador) - v1.0 - 2026-10-18
+REM ATR TRAILING VERVOORT (indicador) - v1.1 - 2026-10-18
+REM v1.1: senal 1 = confirmacion semana siguiente al cruce (ADR-0002).
 REM Plataforma: ProRealTime - modulo Indicador (ProBuilder)
 REM Uso: grafico DIARIO. Dibuja la linea diaria y el muro semanal,
 REM      y escribe el codigo de senal encima de la vela.
-REM Misma logica que screeners/scanner-atr-trailing (v1.1).
+REM Misma logica que screeners/scanner-atr-trailing (v1.2).
 REM Si cambias la logica aqui, cambiala tambien en el screener.
 REM ------------------------------------------------------------
 REM Codigo de senal (un digito por senal activa):
-REM   1 = Giro semanal / 2 = Pullback / 3 = Ruptura / 4 = Perdida muro
+REM   1 = Giro semanal confirmado / 2 = Pullback / 3 = Ruptura / 4 = Perdida muro
 REM ============================================================
 
 REM --- PARAMETROS (editar aqui) -------------------------------
@@ -54,8 +55,14 @@ wkClose = close[wo]
 wkBodyLow = MIN(open[wo], close[wo])
 wkPrevClose = close[wo + 1]
 wkPrevLine = lineW[wo + 1]
+wkOldClose = close[wo + 2]
+wkOldLine = lineW[wo + 2]
 
-sig1 = wkBodyLow > wkLine AND wkPrevClose <= wkPrevLine
+REM Senal 1 (regla D, ADR-0002): confirmacion una semana despues del cruce.
+REM   semana -2: cierre en el muro o por debajo (muro antiguo = resistencia)
+REM   semana -1: cierre por encima del muro (cruce al alza)
+REM   semana  0: sigue por encima y su cuerpo entero supera el muro antiguo
+sig1 = wkOldClose <= wkOldLine AND wkPrevClose > wkPrevLine AND wkClose > wkLine AND wkBodyLow > wkOldLine
 sig4 = wkClose < wkLine AND wkPrevClose >= wkPrevLine
 wkBull = wkClose > wkLine
 
