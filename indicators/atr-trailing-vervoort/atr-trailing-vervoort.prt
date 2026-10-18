@@ -1,5 +1,7 @@
 REM ============================================================
-REM ATR TRAILING VERVOORT (indicador) - v1.5 - 2026-10-18
+REM ATR TRAILING VERVOORT (indicador) - v1.6 - 2026-10-18
+REM v1.6: COLORBETWEEN una sola vez por vela con color variable (la v1.5
+REM       dejaba bandas planas). Leyenda opcional con la variable verLeyenda.
 REM v1.5: leyenda solo con letras, numeros, comas, puntos y guiones
 REM       (v1.4 fallaba: Unauthorized character en el texto).
 REM v1.4: leyenda de senales fija abajo a la izquierda del grafico
@@ -22,13 +24,15 @@ REM   atrPer        Integer   14    periodos del ATR (diario y semanal)
 REM   multD         Decimal   2.5   multiplo diario (2.5 ETF / 2.0 accion)
 REM   multW         Decimal   1.5   multiplo semanal (el muro)
 REM   semanaCerrada Integer   1     1 = sabado / 0 = entre semana
+REM   verLeyenda    Boolean   0     1 = muestra la leyenda de senales
+REM Descripciones sugeridas para la ventana de configuracion: ver la ficha
+REM docs/indicators/atr-trailing-vervoort.md
 REM ------------------------------------------------------------
 REM Codigo de senal (un digito por senal activa):
 REM   1 = Giro semanal confirmado / 2 = Pullback / 3 = Ruptura / 4 = Perdida muro
 REM ============================================================
 
 REM --- PARAMETROS FIJOS ----------------------------------------
-verLeyenda = 1
 maPer1 = 10
 maPer2 = 20
 boPer = 20
@@ -175,16 +179,22 @@ IF sigCode > 0 THEN
 ENDIF
 
 REM Leyenda fija (se dibuja una sola vez, anclada a la esquina)
-IF verLeyenda = 1 AND BarIndex = 0 THEN
-   DRAWTEXT("Senales. 1 giro semanal confirmado - 2 pullback - 3 ruptura - 4 perdida del muro", 10, 62) COLOURED("dimgray") ANCHOR(BOTTOMLEFT, XSHIFT, YSHIFT)
-   DRAWTEXT("Varias a la vez salen juntas, 23 es pullback y ruptura. Sin numero es sin senal", 10, 46) COLOURED("dimgray") ANCHOR(BOTTOMLEFT, XSHIFT, YSHIFT)
-   DRAWTEXT("Huecos. Precio bajo el muro, o a mas de 1 ATR de MM10, MM20 y linea diaria sin ruptura", 10, 30) COLOURED("dimgray") ANCHOR(BOTTOMLEFT, XSHIFT, YSHIFT)
+IF verLeyenda AND BarIndex = 0 THEN
+   DRAWTEXT("Senales. 1 giro semanal confirmado - 2 pullback - 3 ruptura - 4 perdida del muro", 300, 62) COLOURED("dimgray") ANCHOR(BOTTOMLEFT, XSHIFT, YSHIFT)
+   DRAWTEXT("Varias a la vez salen juntas, 23 es pullback y ruptura. Sin numero es sin senal", 300, 46) COLOURED("dimgray") ANCHOR(BOTTOMLEFT, XSHIFT, YSHIFT)
+   DRAWTEXT("Huecos. Precio bajo el muro, o a mas de 1 ATR de MM10, MM20 y linea diaria sin ruptura", 300, 30) COLOURED("dimgray") ANCHOR(BOTTOMLEFT, XSHIFT, YSHIFT)
 ENDIF
 
+REM Zona entre lineas: una sola llamada por vela, color segun el muro
 IF wkBull THEN
-   COLORBETWEEN(lineD, wkLine, "lightgreen")
+   zr = 0
+   zg = 200
+   zb = 0
 ELSE
-   COLORBETWEEN(lineD, wkLine, "pink")
+   zr = 230
+   zg = 0
+   zb = 0
 ENDIF
+COLORBETWEEN(lineD, wkLine, zr, zg, zb, 50)
 
 RETURN lineD COLOURED("orange") AS "Diaria ATR x multD", wkLine COLOURED("red") AS "Semanal ATR x multW (muro)"

@@ -1,4 +1,4 @@
-<!-- atr-trailing-vervoort.md · v1.5 · 2026-10-18 -->
+<!-- atr-trailing-vervoort.md · v1.6 · 2026-10-18 -->
 
 # ATR Trailing Vervoort (indicador) — ficha / especificación
 
@@ -6,9 +6,9 @@
 |---|---|
 | Plataforma | ProRealTime · Indicador (ProBuilder) |
 | Fichero | `indicators/atr-trailing-vervoort/atr-trailing-vervoort.prt` |
-| Versión | v1.5 |
+| Versión | v1.6 |
 | Estado | En validación → `docs/validation/atr-trailing-vervoort/PRT-001.md` |
-| Tag | `atr-trailing-vervoort-prt/v1.5.0` |
+| Tag | `atr-trailing-vervoort-prt/v1.6.0` |
 
 ## Propósito
 
@@ -22,16 +22,17 @@ Sirve para validar el screener en instrumentos que ProScreener no devuelve con l
 ## Uso
 
 1. Gráfico **diario**.
-2. Crea las 4 variables en la ventana **Variables** del editor, en este orden. Salen en la leyenda entre paréntesis, por ejemplo `(14 2.5 1.5 1)`:
+2. Crea las 5 variables en la ventana **Variables** del editor, en este orden. Salen en la leyenda entre paréntesis, por ejemplo `(14 2.5 1.5 1 0)`. La **descripción** es el texto que verás en la pantalla de configuración; sirve de recordatorio:
 
-| Variable | Tipo | Valor por defecto | Uso |
+| Variable | Tipo | Valor | Descripción (copiar tal cual) |
 |---|---|---|---|
-| `atrPer` | Integer | 14 | Periodos del ATR, diario y semanal |
-| `multD` | Decimal | 2.5 | Múltiplo diario: 2,5 ETF / 2,0 acción |
-| `multW` | Decimal | 1.5 | Múltiplo semanal (el muro) |
-| `semanaCerrada` | Integer | 1 | 1 = sábado / 0 = entre semana |
+| `atrPer` | Integer | 14 | ATR periodos, diario y semanal |
+| `multD` | Decimal | 2.5 | Multiplo diario. 2.5 ETF, 2.0 accion |
+| `multW` | Decimal | 1.5 | Multiplo semanal, el muro |
+| `semanaCerrada` | Integer | 1 | 1 sabado, 0 entre semana |
+| `verLeyenda` | Boolean | 0 | Leyenda. 1 giro, 2 pullback, 3 ruptura, 4 perdida muro |
 
-3. La zona entre las dos líneas sale verde con el precio sobre el muro y rosa con el precio debajo. Si tenías zonas en la pestaña **Color zones**, quítalas para no duplicar.
+3. La zona entre las dos líneas sale verde con el precio sobre el muro y roja con el precio debajo. Si tenías zonas en la pestaña **Color zones**, quítalas para no duplicar.
 4. Las curvas se llaman "Diaria ATR x multD" (naranja) y "Semanal ATR x multW (muro)" (rojo).
 
 ## Vela semanal construida a mano (v1.2)
@@ -54,7 +55,7 @@ Simulado con datos semanales reales: da los mismos muros que el cálculo de refe
 
 Encima de cada vela sale el código de las señales activas ese día: 1 giro semanal confirmado, 2 pullback, 3 ruptura, 4 pérdida del muro. Si hay varias, salen juntas (por ejemplo 23). Sin señal no sale nada: el 0 no se pinta, a propósito, para no llenar el gráfico.
 
-Desde la v1.4 (corregido en v1.5), este recordatorio sale fijo abajo a la izquierda del gráfico. Se oculta poniendo `verLeyenda = 0` en el código.
+El recordatorio está en la descripción de `verLeyenda`, en la configuración del indicador. Si la marcas, también sale en el gráfico, abajo a la izquierda.
 
 Huecos sin números: el precio está por debajo del muro (2 y 3 exigen muro en soporte), o se ha alejado más de 1 ATR de la MM10, de la MM20 y de la línea diaria, y no hay ruptura.
 
@@ -74,3 +75,4 @@ En el historial, el muro y las señales semanales (1 y 4) se recalculan cada dí
 | v1.3 | 2026-10-18 | Zona coloreada entre las dos líneas con `COLORBETWEEN` |
 | v1.4 | 2026-10-18 | Leyenda de señales fija en el gráfico (`DRAWTEXT` con `ANCHOR`). No compila |
 | v1.5 | 2026-10-18 | Leyenda sin símbolos (`\|`, `:`, `(`, `)`, `+`, `=`) ni parámetros de fuente |
+| v1.6 | 2026-10-18 | Una sola `COLORBETWEEN` por vela con color en variables (la v1.5 dejaba bandas planas). Leyenda opcional con la variable `verLeyenda` |
