@@ -1,4 +1,4 @@
-<!-- README.md · v1.8 · 2026-10-18 -->
+<!-- README.md · v1.9 · 2026-10-18 -->
 
 # prtcode-vault
 
@@ -22,8 +22,8 @@ ProRealTime no impone extensión: el código se pega en la plataforma. Las exten
 
 | Script | Tipo | Versión | Estado |
 |---|---|---|---|
-| [scanner-atr-trailing](docs/indicators/scanner-atr-trailing.md) | ProScreener | v1.2 | En validación |
-| [atr-trailing-vervoort](docs/indicators/atr-trailing-vervoort.md) | Indicador | v1.6 | En validación |
+| [scanner-atr-trailing](docs/indicators/scanner-atr-trailing.md) | ProScreener | v1.2 | Validado |
+| [atr-trailing-vervoort](docs/indicators/atr-trailing-vervoort.md) | Indicador | v1.6 | Validado |
 
 ## Convenciones
 
