@@ -1,5 +1,7 @@
 REM ============================================================
-REM ATR TRAILING VERVOORT (indicador) - v1.2 - 2026-10-18
+REM ATR TRAILING VERVOORT (indicador) - v1.3 - 2026-10-18
+REM v1.3: zona coloreada entre las dos lineas (verde: precio sobre el
+REM       muro / rojo: precio bajo el muro).
 REM v1.2: vela semanal construida a mano con las velas diarias
 REM       (TIMEFRAME(weekly) no actualiza la semana en curso en el
 REM       indicador). Parametros visibles en la leyenda.
@@ -165,6 +167,12 @@ REM DIBUJO
 REM ============================================================
 IF sigCode > 0 THEN
    DRAWTEXT("#sigCode#", barindex, high + atrD * 0.5) COLOURED("blue")
+ENDIF
+
+IF wkBull THEN
+   COLORBETWEEN(lineD, wkLine, "lightgreen")
+ELSE
+   COLORBETWEEN(lineD, wkLine, "pink")
 ENDIF
 
 RETURN lineD COLOURED("orange") AS "Diaria ATR x multD", wkLine COLOURED("red") AS "Semanal ATR x multW (muro)"

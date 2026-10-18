@@ -1,4 +1,4 @@
-<!-- atr-trailing-vervoort.md · v1.2 · 2026-10-18 -->
+<!-- atr-trailing-vervoort.md · v1.3 · 2026-10-18 -->
 
 # ATR Trailing Vervoort (indicador) — ficha / especificación
 
@@ -6,9 +6,9 @@
 |---|---|
 | Plataforma | ProRealTime · Indicador (ProBuilder) |
 | Fichero | `indicators/atr-trailing-vervoort/atr-trailing-vervoort.prt` |
-| Versión | v1.2 |
+| Versión | v1.3 |
 | Estado | En validación → `docs/validation/atr-trailing-vervoort/PRT-001.md` |
-| Tag | `atr-trailing-vervoort-prt/v1.2.0` |
+| Tag | `atr-trailing-vervoort-prt/v1.3.0` |
 
 ## Propósito
 
@@ -31,7 +31,8 @@ Sirve para validar el screener en instrumentos que ProScreener no devuelve con l
 | `multW` | Decimal | 1.5 | Múltiplo semanal (el muro) |
 | `semanaCerrada` | Integer | 1 | 1 = sábado / 0 = entre semana |
 
-3. Las curvas se llaman "Diaria ATR x multD" (naranja) y "Semanal ATR x multW (muro)" (rojo).
+3. La zona entre las dos líneas sale verde con el precio sobre el muro y rosa con el precio debajo. Si tenías zonas en la pestaña **Color zones**, quítalas para no duplicar.
+4. Las curvas se llaman "Diaria ATR x multD" (naranja) y "Semanal ATR x multW (muro)" (rojo).
 
 ## Vela semanal construida a mano (v1.2)
 
@@ -49,6 +50,14 @@ Simulado con datos semanales reales: da los mismos muros que el cálculo de refe
 - La lógica es la del screener v1.2. El screener sigue usando `TIMEFRAME(weekly)`, porque ahí sí ve la semana completa. ProBuilder no tiene librerías, así que hay que mantener los dos a mano.
 - No calcula las columnas del screener (Dist52W, Stop): ProRealTime da error si una variable se calcula y no se usa.
 
+## Qué significan los números azules
+
+Encima de cada vela sale el código de las señales activas ese día: 1 giro semanal confirmado, 2 pullback, 3 ruptura, 4 pérdida del muro. Si hay varias, salen juntas (por ejemplo 23). Sin señal no sale nada.
+
+Huecos sin números: el precio está por debajo del muro (2 y 3 exigen muro en soporte), o se ha alejado más de 1 ATR de la MM10, de la MM20 y de la línea diaria, y no hay ruptura.
+
+Con `semanaCerrada = 0`, las señales semanales (1 y 4) se leen de la última semana cerrada. Por eso salen una semana más tarde: el 1 del 13-abr-2026 de VGT aparece en la semana del 20-abr.
+
 ## Limitación
 
 En el historial, el muro y las señales semanales (1 y 4) se recalculan cada día con la semana en curso. Por eso pueden aparecer a mitad de semana. Lo que vale es el valor del último día de cada semana.
@@ -60,3 +69,4 @@ En el historial, el muro y las señales semanales (1 y 4) se recalculan cada dí
 | v1.0 | 2026-10-18 | Primera versión, lógica del screener v1.1 |
 | v1.1 | 2026-10-18 | Señal 1 con confirmación la semana siguiente (ADR-0002) |
 | v1.2 | 2026-10-18 | Vela semanal construida con velas diarias; parámetros como variables visibles en la leyenda |
+| v1.3 | 2026-10-18 | Zona coloreada entre las dos líneas con `COLORBETWEEN` |
