@@ -1,4 +1,4 @@
-<!-- atr-trailing-vervoort.md · v1.3 · 2026-10-18 -->
+<!-- atr-trailing-vervoort.md · v1.4 · 2026-10-18 -->
 
 # ATR Trailing Vervoort (indicador) — ficha / especificación
 
@@ -6,9 +6,9 @@
 |---|---|
 | Plataforma | ProRealTime · Indicador (ProBuilder) |
 | Fichero | `indicators/atr-trailing-vervoort/atr-trailing-vervoort.prt` |
-| Versión | v1.3 |
+| Versión | v1.4 |
 | Estado | En validación → `docs/validation/atr-trailing-vervoort/PRT-001.md` |
-| Tag | `atr-trailing-vervoort-prt/v1.3.0` |
+| Tag | `atr-trailing-vervoort-prt/v1.4.0` |
 
 ## Propósito
 
@@ -52,11 +52,13 @@ Simulado con datos semanales reales: da los mismos muros que el cálculo de refe
 
 ## Qué significan los números azules
 
-Encima de cada vela sale el código de las señales activas ese día: 1 giro semanal confirmado, 2 pullback, 3 ruptura, 4 pérdida del muro. Si hay varias, salen juntas (por ejemplo 23). Sin señal no sale nada.
+Encima de cada vela sale el código de las señales activas ese día: 1 giro semanal confirmado, 2 pullback, 3 ruptura, 4 pérdida del muro. Si hay varias, salen juntas (por ejemplo 23). Sin señal no sale nada: el 0 no se pinta, a propósito, para no llenar el gráfico.
+
+Desde la v1.4, este recordatorio sale fijo abajo a la izquierda del gráfico. Se oculta poniendo `verLeyenda = 0` en el código.
 
 Huecos sin números: el precio está por debajo del muro (2 y 3 exigen muro en soporte), o se ha alejado más de 1 ATR de la MM10, de la MM20 y de la línea diaria, y no hay ruptura.
 
-Con `semanaCerrada = 0`, las señales semanales (1 y 4) se leen de la última semana cerrada. Por eso salen una semana más tarde: el 1 del 13-abr-2026 de VGT aparece en la semana del 20-abr.
+Con `semanaCerrada = 0`, las señales semanales (1 y 4) se leen de la última semana cerrada. Por eso salen una semana más tarde: el 1 del 13-abr-2026 de VGT aparece en la semana del 20-abr (comprobado en ProRealTime).
 
 ## Limitación
 
@@ -70,3 +72,4 @@ En el historial, el muro y las señales semanales (1 y 4) se recalculan cada dí
 | v1.1 | 2026-10-18 | Señal 1 con confirmación la semana siguiente (ADR-0002) |
 | v1.2 | 2026-10-18 | Vela semanal construida con velas diarias; parámetros como variables visibles en la leyenda |
 | v1.3 | 2026-10-18 | Zona coloreada entre las dos líneas con `COLORBETWEEN` |
+| v1.4 | 2026-10-18 | Leyenda de señales fija en el gráfico (`DRAWTEXT` con `ANCHOR`) |
