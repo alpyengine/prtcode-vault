@@ -1,4 +1,4 @@
-<!-- scanner-atr-trailing.md · v1.0 · 2026-10-18 -->
+<!-- scanner-atr-trailing.md · v1.1 · 2026-10-18 -->
 
 # Scanner ATR Trailing (Vervoort) — ficha / especificación
 
@@ -6,10 +6,10 @@
 |---|---|
 | Plataforma | ProRealTime · ProScreener |
 | Fichero | `screeners/scanner-atr-trailing/scanner-atr-trailing.prs` |
-| Versión | v1.0 |
+| Versión | v1.1 |
 | Estado | En validación → `docs/validation/scanner-atr-trailing/PRT-001.md` |
 | Decisiones | `docs/decisions/ADR-0001-scanner-atr-trailing-diseno.md` |
-| Tag | `scanner-atr-trailing-prt/v1.0.0` |
+| Tag | `scanner-atr-trailing-prt/v1.1.0` |
 
 ## Propósito
 
@@ -104,3 +104,4 @@ Las señales diarias (2 y 3) se comprueban en el gráfico durante la validación
 | Versión | Fecha | Cambio |
 |---|---|---|
 | v1.0 | 2026-10-18 | Primera versión: 4 señales, 3 columnas, línea de 6 preparada |
+| v1.1 | 2026-10-18 | Cálculos de la versión 6 col comentados (`REM [6COL]`): PRT no admite variables sin usar |

@@ -1,5 +1,7 @@
 REM ============================================================
-REM SCANNER ATR TRAILING (Vervoort) - v1.0 - 2026-10-18
+REM SCANNER ATR TRAILING (Vervoort) - v1.1 - 2026-10-18
+REM v1.1: calculos solo de la version 6 col comentados (PRT da error
+REM       de sintaxis si una variable se calcula y no se usa).
 REM Plataforma: ProRealTime - modulo ProScreener
 REM Periodo de la interfaz: DIARIO. Lista: watchlist ETF o acciones.
 REM Spec: docs/indicators/scanner-atr-trailing.md
@@ -27,8 +29,8 @@ maPer2 = 20
 boPer = 20
 volPer = 20
 hsPer = 252
-rsiPer = 14
-tdLook = 3
+REM [6COL] rsiPer = 14
+REM [6COL] tdLook = 3
 
 IF isETF = 1 THEN
    multD = multETF
@@ -97,16 +99,16 @@ nearMA20 = ABS(close - ma20) <= atrD
 nearLineD = ABS(close - lineD) <= atrD
 sig2 = aboveWall AND (nearMA10 OR nearMA20 OR nearLineD)
 
-REM --- TD Buy Setup 9 (solo informativo, columna en version 6 col) ---
-IF close < close[4] THEN
-   tdCount = tdCount + 1
-ELSE
-   tdCount = 0
-ENDIF
-IF tdCount = 9 THEN
-   td9Bar = BarIndex
-ENDIF
-td9 = td9Bar > 0 AND (BarIndex - td9Bar) < tdLook
+REM --- TD Buy Setup 9 (solo version 6 col) ---
+REM [6COL] IF close < close[4] THEN
+REM [6COL]    tdCount = tdCount + 1
+REM [6COL] ELSE
+REM [6COL]    tdCount = 0
+REM [6COL] ENDIF
+REM [6COL] IF tdCount = 9 THEN
+REM [6COL]    td9Bar = BarIndex
+REM [6COL] ENDIF
+REM [6COL] td9 = td9Bar > 0 AND (BarIndex - td9Bar) < tdLook
 
 REM --- Senal 3: ruptura momentum ---
 hiN = Highest[boPer](high)
@@ -125,13 +127,14 @@ IF hs52 > 0 THEN
 ELSE
    distHS = 0
 ENDIF
-IF wkLine > 0 THEN
-   distWall = (close - wkLine) / wkLine
-ELSE
-   distWall = 0
-ENDIF
 stopLvl = close - multD * atrD
-rsiD = RSI[rsiPer](close)
+REM --- Solo version 6 col ---
+REM [6COL] IF wkLine > 0 THEN
+REM [6COL]    distWall = (close - wkLine) / wkLine
+REM [6COL] ELSE
+REM [6COL]    distWall = 0
+REM [6COL] ENDIF
+REM [6COL] rsiD = RSI[rsiPer](close)
 
 REM Codigo combinado: un digito por senal, en orden 1-2-3-4
 sigCode = 0
@@ -154,5 +157,8 @@ REM --- Version 3 columnas (licencia gratuita) ---
 SCREENER[anySig](sigCode AS "Senal", distHS AS "Dist52W" PERCENTFORMAT, stopLvl AS "Stop")
 
 REM --- Version 6 columnas (licencia completa) ---
-REM Para activarla: borra la linea SCREENER de arriba y quita el REM de abajo.
+REM Para activarla:
+REM   1. Quita el prefijo "REM [6COL] " de todas las lineas marcadas.
+REM   2. Borra la linea SCREENER de 3 columnas.
+REM   3. Quita el REM de la linea SCREENER de abajo.
 REM SCREENER[anySig](sigCode AS "Senal", distHS AS "Dist52W" PERCENTFORMAT, stopLvl AS "Stop", distWall AS "DistMuro" PERCENTFORMAT, rsiD AS "RSI14", td9 AS "TD9")
