@@ -1,4 +1,4 @@
-<!-- prt-rules.md · v1.7 · 18-oct-2026 · La Granja -->
+<!-- prt-rules.md · v1.8 · 18-oct-2026 · La Granja -->
 
 # PRT Rules — errores y reglas reales de ProRealTime
 
@@ -28,6 +28,10 @@ Una regla por línea, con este formato:
 ## 2. Indicador (IND)
 
 - [IND] En un indicador sobre gráfico diario con datos de fin de día, `TIMEFRAME(weekly)` deja de actualizar la vela semanal en curso en las últimas sesiones. VGT, SNOW y XOM mostraban el viernes 16-oct el muro calculado con el cierre de martes o miércoles. El screener, con el mismo código, sí ve la semana completa (SNOW = señal 4). — Origen: atr-trailing-vervoort v1.1 · 18-oct-2026 · ✅ observado · ⚠️ causa por confirmar
+
+- [IND] `DRAWTEXT` con `ANCHOR`: el texto con `|` dio `Unauthorized character: "a variable name"` (también llevaba `:`, `(`, `)`, `+`, `=` y parámetros de fuente). Con solo letras, números, comas, puntos y guiones compila. El punto de anclaje es el centro del texto. — Origen: atr-trailing-vervoort v1.4/v1.5 · 18-oct-2026 · ✅ confirmada
+- [IND] Dos `COLORBETWEEN` en ramas distintas de un `IF` dejan bandas planas: la zona que no se llama mantiene sus últimos valores. Usar una sola llamada por vela con el color en variables. — Origen: atr-trailing-vervoort v1.5 · 18-oct-2026 · ✅ observado
+- [IND] Las variables del indicador (ventana Variables) salen en la leyenda entre paréntesis, y su descripción en la pantalla de configuración. — Origen: atr-trailing-vervoort v1.2 · 18-oct-2026 · ✅ confirmada
 
 ## 3. ProBacktest / ProOrder (ORD)
 
@@ -61,6 +65,7 @@ Una regla por línea, con este formato:
 
 | Mensaje de error | Causa | Solución | Script · fecha |
 |---|---|---|---|
+| `Unauthorized character: "a variable name"` (línea con `DRAWTEXT`) | Símbolos en el texto (`\|` probable) | Solo letras, números, comas, puntos y guiones | atr-trailing-vervoort v1.4 · 18-oct-2026 |
 | `Syntax error: This variable is not used in the code: td9, distwall, rsid` | Variables calculadas solo para la línea `SCREENER` de 6 columnas, que estaba comentada | Comentar sus cálculos con `REM [6COL]` | scanner-atr-trailing v1.0 · 18-oct-2026 |
 
 ## 8. Pendiente de verificar
@@ -74,6 +79,7 @@ Una regla por línea, con este formato:
 | Versión | Fecha | Cambio |
 |---|---|---|
 | v1 | 18-oct-2026 | Esqueleto inicial |
+| v1.8 | 18-oct-2026 | DRAWTEXT con símbolos falla; COLORBETWEEN una vez por vela; variables en leyenda |
 | v1.7 | 18-oct-2026 | Indicador: semanal en curso desfasado; ProScreener muestra hasta 100 resultados |
 | v1.6 | 18-oct-2026 | ProScreener gratuito: NYSE sí, Nasdaq y ETF no (observado) |
 | v1.5 | 18-oct-2026 | ETF NYSE Arca no aparecen en ProScreener (licencia gratuita) |
