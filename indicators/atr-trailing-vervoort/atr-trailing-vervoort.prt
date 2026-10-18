@@ -1,5 +1,7 @@
 REM ============================================================
-REM ATR TRAILING VERVOORT (indicador) - v1.4 - 2026-10-18
+REM ATR TRAILING VERVOORT (indicador) - v1.5 - 2026-10-18
+REM v1.5: leyenda solo con letras, numeros, comas, puntos y guiones
+REM       (v1.4 fallaba: Unauthorized character en el texto).
 REM v1.4: leyenda de senales fija abajo a la izquierda del grafico
 REM       (verLeyenda = 0 para ocultarla).
 REM v1.3: zona coloreada entre las dos lineas (verde: precio sobre el
@@ -174,9 +176,9 @@ ENDIF
 
 REM Leyenda fija (se dibuja una sola vez, anclada a la esquina)
 IF verLeyenda = 1 AND BarIndex = 0 THEN
-   DRAWTEXT("Senales: 1 giro semanal confirmado | 2 pullback | 3 ruptura | 4 perdida del muro", 10, 62, SANSERIF, STANDARD, 11) COLOURED("dimgray") ANCHOR(BOTTOMLEFT, XSHIFT, YSHIFT)
-   DRAWTEXT("Varias a la vez salen juntas (23 = pullback + ruptura). Sin numero = sin senal", 10, 46, SANSERIF, STANDARD, 11) COLOURED("dimgray") ANCHOR(BOTTOMLEFT, XSHIFT, YSHIFT)
-   DRAWTEXT("Huecos: precio bajo el muro, o a mas de 1 ATR de MM10, MM20 y linea diaria sin ruptura", 10, 30, SANSERIF, STANDARD, 11) COLOURED("dimgray") ANCHOR(BOTTOMLEFT, XSHIFT, YSHIFT)
+   DRAWTEXT("Senales. 1 giro semanal confirmado - 2 pullback - 3 ruptura - 4 perdida del muro", 10, 62) COLOURED("dimgray") ANCHOR(BOTTOMLEFT, XSHIFT, YSHIFT)
+   DRAWTEXT("Varias a la vez salen juntas, 23 es pullback y ruptura. Sin numero es sin senal", 10, 46) COLOURED("dimgray") ANCHOR(BOTTOMLEFT, XSHIFT, YSHIFT)
+   DRAWTEXT("Huecos. Precio bajo el muro, o a mas de 1 ATR de MM10, MM20 y linea diaria sin ruptura", 10, 30) COLOURED("dimgray") ANCHOR(BOTTOMLEFT, XSHIFT, YSHIFT)
 ENDIF
 
 IF wkBull THEN
