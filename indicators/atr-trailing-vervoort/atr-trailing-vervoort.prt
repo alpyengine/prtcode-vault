@@ -1,0 +1,124 @@
+REM ============================================================
+REM ATR TRAILING VERVOORT (indicador) - v1.0 - 2026-10-18
+REM Plataforma: ProRealTime - modulo Indicador (ProBuilder)
+REM Uso: grafico DIARIO. Dibuja la linea diaria y el muro semanal,
+REM      y escribe el codigo de senal encima de la vela.
+REM Misma logica que screeners/scanner-atr-trailing (v1.1).
+REM Si cambias la logica aqui, cambiala tambien en el screener.
+REM ------------------------------------------------------------
+REM Codigo de senal (un digito por senal activa):
+REM   1 = Giro semanal / 2 = Pullback / 3 = Ruptura / 4 = Perdida muro
+REM ============================================================
+
+REM --- PARAMETROS (editar aqui) -------------------------------
+isETF = 1
+semanaCerrada = 1
+atrPer = 14
+multW = 1.5
+multETF = 2.5
+multStock = 2.0
+maPer1 = 10
+maPer2 = 20
+boPer = 20
+volPer = 20
+
+IF isETF = 1 THEN
+   multD = multETF
+ELSE
+   multD = multStock
+ENDIF
+
+REM ============================================================
+REM BLOQUE SEMANAL - linea Vervoort con trinquete
+REM ============================================================
+TIMEFRAME(weekly)
+
+atrW = AverageTrueRange[atrPer](close)
+
+IF lineW[1] = 0 THEN
+   lineW = close
+ELSIF close > lineW[1] AND close[1] > lineW[1] THEN
+   lineW = MAX(lineW[1], close - multW * atrW)
+ELSIF close < lineW[1] AND close[1] < lineW[1] THEN
+   lineW = MIN(lineW[1], close + multW * atrW)
+ELSIF close > lineW[1] THEN
+   lineW = close - multW * atrW
+ELSE
+   lineW = close + multW * atrW
+ENDIF
+
+REM wo = desfase: 0 el sabado, 1 entre semana (ultima semana cerrada)
+wo = 1 - semanaCerrada
+wkLine = lineW[wo]
+wkClose = close[wo]
+wkBodyLow = MIN(open[wo], close[wo])
+wkPrevClose = close[wo + 1]
+wkPrevLine = lineW[wo + 1]
+
+sig1 = wkBodyLow > wkLine AND wkPrevClose <= wkPrevLine
+sig4 = wkClose < wkLine AND wkPrevClose >= wkPrevLine
+wkBull = wkClose > wkLine
+
+REM ============================================================
+REM BLOQUE DIARIO
+REM ============================================================
+TIMEFRAME(default)
+
+atrD = AverageTrueRange[atrPer](close)
+
+IF lineD[1] = 0 THEN
+   lineD = close
+ELSIF close > lineD[1] AND close[1] > lineD[1] THEN
+   lineD = MAX(lineD[1], close - multD * atrD)
+ELSIF close < lineD[1] AND close[1] < lineD[1] THEN
+   lineD = MIN(lineD[1], close + multD * atrD)
+ELSIF close > lineD[1] THEN
+   lineD = close - multD * atrD
+ELSE
+   lineD = close + multD * atrD
+ENDIF
+
+REM Precio sobre el muro semanal en modo soporte
+aboveWall = wkBull AND close > wkLine
+
+REM --- Senal 2: pullback en tendencia ---
+ma10 = Average[maPer1](close)
+ma20 = Average[maPer2](close)
+nearMA10 = ABS(close - ma10) <= atrD
+nearMA20 = ABS(close - ma20) <= atrD
+nearLineD = ABS(close - lineD) <= atrD
+sig2 = aboveWall AND (nearMA10 OR nearMA20 OR nearLineD)
+
+REM --- Senal 3: ruptura momentum ---
+hiN = Highest[boPer](high)
+breakout = close > hiN[1]
+forceBar = close > open AND close > high[1]
+volAvg = Average[volPer](volume)
+volUp = volume > volAvg
+sig3 = breakout AND forceBar AND volUp AND aboveWall
+
+REM ============================================================
+REM CODIGO DE SENAL
+REM ============================================================
+sigCode = 0
+IF sig1 THEN
+   sigCode = sigCode * 10 + 1
+ENDIF
+IF sig2 THEN
+   sigCode = sigCode * 10 + 2
+ENDIF
+IF sig3 THEN
+   sigCode = sigCode * 10 + 3
+ENDIF
+IF sig4 THEN
+   sigCode = sigCode * 10 + 4
+ENDIF
+
+REM ============================================================
+REM DIBUJO
+REM ============================================================
+IF sigCode > 0 THEN
+   DRAWTEXT("#sigCode#", barindex, high + atrD * 0.5) COLOURED("blue")
+ENDIF
+
+RETURN lineD COLOURED("orange") AS "Linea diaria", wkLine COLOURED("red") AS "Muro semanal"
