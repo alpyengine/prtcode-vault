@@ -1,5 +1,5 @@
 REM ============================================================
-REM SCANNER ATR TRAILING - DEBUG v1 (base v1.1) - 2026-10-18
+REM SCANNER ATR TRAILING - DEBUG v2 (base v1.2) - 2026-10-18
 REM Muestra TODOS los tickers con valores intermedios. Solo para validacion.
 REM Columnas: Senal, LineaW (muro semanal), CierreW (cierre semanal usado).
 REM v1.1: calculos solo de la version 6 col comentados (PRT da error
@@ -10,7 +10,7 @@ REM Spec: docs/indicators/scanner-atr-trailing.md
 REM ADR : docs/decisions/ADR-0001-scanner-atr-trailing-diseno.md
 REM ------------------------------------------------------------
 REM Columna Senal = codigo combinado, un digito por senal activa:
-REM   1 = Giro semanal        (puerta B)
+REM   1 = Giro semanal confirmado (puerta B)
 REM   2 = Pullback tendencia  (puerta A)
 REM   3 = Ruptura momentum    (puerta C)
 REM   4 = Perdida del muro    (salida del radar)
@@ -66,8 +66,14 @@ wkClose = close[wo]
 wkBodyLow = MIN(open[wo], close[wo])
 wkPrevClose = close[wo + 1]
 wkPrevLine = lineW[wo + 1]
+wkOldClose = close[wo + 2]
+wkOldLine = lineW[wo + 2]
 
-sig1 = wkBodyLow > wkLine AND wkPrevClose <= wkPrevLine
+REM Senal 1 (regla D, ADR-0002): confirmacion una semana despues del cruce.
+REM   semana -2: cierre en el muro o por debajo (muro antiguo = resistencia)
+REM   semana -1: cierre por encima del muro (cruce al alza)
+REM   semana  0: sigue por encima y su cuerpo entero supera el muro antiguo
+sig1 = wkOldClose <= wkOldLine AND wkPrevClose > wkPrevLine AND wkClose > wkLine AND wkBodyLow > wkOldLine
 sig4 = wkClose < wkLine AND wkPrevClose >= wkPrevLine
 wkBull = wkClose > wkLine
 

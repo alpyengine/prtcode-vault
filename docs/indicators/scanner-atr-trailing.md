@@ -1,4 +1,4 @@
-<!-- scanner-atr-trailing.md · v1.1 · 2026-10-18 -->
+<!-- scanner-atr-trailing.md · v1.2 · 2026-10-18 -->
 
 # Scanner ATR Trailing (Vervoort) — ficha / especificación
 
@@ -6,10 +6,10 @@
 |---|---|
 | Plataforma | ProRealTime · ProScreener |
 | Fichero | `screeners/scanner-atr-trailing/scanner-atr-trailing.prs` |
-| Versión | v1.1 |
+| Versión | v1.2 |
 | Estado | En validación → `docs/validation/scanner-atr-trailing/PRT-001.md` |
-| Decisiones | `docs/decisions/ADR-0001-scanner-atr-trailing-diseno.md` |
-| Tag | `scanner-atr-trailing-prt/v1.1.0` |
+| Decisiones | `docs/decisions/ADR-0001-scanner-atr-trailing-diseno.md` · `ADR-0002-senal1-confirmacion.md` |
+| Tag | `scanner-atr-trailing-prt/v1.2.0` |
 
 ## Propósito
 
@@ -51,7 +51,7 @@ ProScreener no tiene parámetros en la interfaz: se editan en el propio código.
 
 | Código | Nombre | Condición |
 |---|---|---|
-| 1 | Giro semanal (puerta B) | Cuerpo de la semana cerrada (`min(open, close)`) por encima de la línea semanal y cierre de la semana anterior en la línea o por debajo |
+| 1 | Giro semanal confirmado (puerta B) | Hace 2 semanas, cierre en el muro o por debajo; la semana pasada, cruce al alza; esta semana sigue por encima **y su cuerpo** (`min(open, close)`) **supera el muro antiguo**. Llega una semana después del cruce (ADR-0002) |
 | 2 | Pullback en tendencia (puerta A) | Muro en soporte, cierre diario por encima del muro y cierre a ≤1 ATR diario de MM10, MM20 o la línea diaria |
 | 3 | Ruptura momentum (puerta C) | Cierre > máximo de 20 días previo, cierre > apertura, cierre > máximo de ayer, volumen > media de 20 y muro en soporte |
 | 4 | Pérdida del muro (salida) | Semana cerrada por debajo de la línea semanal y la anterior en la línea o por encima |
@@ -89,8 +89,15 @@ Calculadas fuera de ProRealTime con datos semanales ajustados (Twelve Data). Pue
 | Ticker | Línea semanal | Rol | Dist. muro | Señal semanal esperada |
 |---|---|---|---|---|
 | VGT | 127,34 | Resistencia | −6,7 % | **4** (pérdida del muro) |
-| SCHD | 33,10 | Soporte | +3,8 % | **1** (giro semanal) |
-| VDC | 226,39 | Soporte | +4,9 % | **1** (giro semanal) |
+| SCHD | 33,10 | Soporte | +3,8 % | ninguna (cruzó esta semana; 1 posible el 24-oct) |
+| VDC | 226,39 | Soporte | +4,9 % | ninguna (cruzó esta semana; 1 posible el 24-oct) |
+| KO | 88,79 | Soporte | +5,8 % | ninguna (cruzó esta semana; 1 posible el 24-oct) |
+| JPM | 354,02 | Resistencia | −4,0 % | ninguna |
+| XOM | 165,81 | Soporte | +7,9 % | ninguna |
+
+Histórico de la señal 1 (regla D) para comprobar con el indicador: VGT 13-abr-2026, KO 26-ene y 18-may-2026, XOM 27-jul-2026.
+
+**Limitación de datos:** con la licencia gratuita, ProScreener solo devuelve acciones de NYSE (ver `docs/prt-rules.md`). VGT, SCHD y VDC se validan con el indicador.
 
 Las señales diarias (2 y 3) se comprueban en el gráfico durante la validación.
 
@@ -105,3 +112,4 @@ Las señales diarias (2 y 3) se comprueban en el gráfico durante la validación
 |---|---|---|
 | v1.0 | 2026-10-18 | Primera versión: 4 señales, 3 columnas, línea de 6 preparada |
 | v1.1 | 2026-10-18 | Cálculos de la versión 6 col comentados (`REM [6COL]`): PRT no admite variables sin usar |
+| v1.2 | 2026-10-18 | Señal 1 = confirmación la semana siguiente al cruce, con el cuerpo sobre el muro antiguo (ADR-0002) |
