@@ -1,0 +1,75 @@
+<!-- prt-rules.md · v1.1 · 18-oct-2026 · La Granja -->
+
+# PRT Rules — errores y reglas reales de ProRealTime
+
+Reglas aprendidas al compilar y probar scripts en ProRealTime.
+Complementa la skill `prt-script`. No repite el manual: solo lo que falló, sorprendió o no está claro en él.
+
+Leer antes de escribir o depurar cualquier `.prt`, `.pts` o `.prs`.
+
+---
+
+## Cómo añadir una regla
+
+Una regla por línea, con este formato:
+
+`[MÓDULO] Regla corta. — Origen: script/versión · fecha · ✅ confirmada | ⚠️ por confirmar`
+
+- **MÓDULO**: GEN, IND, ORD, SCR, MTF.
+- **✅ confirmada**: probada en la plataforma (compila o falla de verdad).
+- **⚠️ por confirmar**: sale del manual o de una sospecha, aún sin probar.
+
+---
+
+## 1. General ProBuilder (GEN)
+
+_(vacío)_
+
+## 2. Indicador (IND)
+
+_(vacío)_
+
+## 3. ProBacktest / ProOrder (ORD)
+
+- [ORD] `DEFPARAM CumulateOrders = False` obligatorio. — Origen: manual · ⚠️ por confirmar
+
+## 4. ProScreener (SCR)
+
+- [SCR] `DEFPARAM` da error de compilación. — Origen: manual · ⚠️ por confirmar
+- [SCR] Historial máximo: 256 velas (1024 Premium) del timeframe elegido. — Origen: manual · ⚠️ por confirmar
+- [SCR] Resultados visibles: 50 (100 Premium). — Origen: manual · ⚠️ por confirmar
+- [SCR] Columnas: 3 o 6 según licencia. Solo con una única instrucción `SCREENER`. — Origen: manual · ⚠️ por confirmar
+- [SCR] Comentarios: el manual ProScreener v6.1.0 usa `//` en sus propios ejemplos. `REM` sigue siendo la opción segura. — Origen: manual v6.1.0 · ⚠️ por confirmar
+- [SCR] `PERCENTFORMAT` multiplica por 100. Pasar la fracción (0,05), no el porcentaje (5). — Origen: manual v6.1.0, p. 9 · ⚠️ por confirmar
+- [SCR] La columna de orden se elige en la interfaz entre las columnas del `SCREENER`. — Origen: manual v6.1.0, p. 8-9 · ⚠️ por confirmar
+
+## 5. Multi-timeframe (MTF)
+
+- [MTF] `TIMEFRAME(weekly, UPDATEONCLOSE)` calcula solo al cierre de la vela superior. Documentado en ProBuilder; el manual ProScreener no lo menciona. — Origen: manual ProBuilder v6.1.0, p. 42 · ⚠️ por confirmar en ProScreener
+
+## 6. Plataforma y licencia
+
+| Dato | Valor |
+|---|---|
+| Licencia (estándar / Premium) | _por indicar_ |
+| Columnas ProScreener | _por indicar (3 o 6)_ |
+| ¿Exige la app abierta? | _por indicar_ |
+
+## 7. Errores de compilación conocidos
+
+| Mensaje de error | Causa | Solución | Script · fecha |
+|---|---|---|---|
+| _(vacío)_ | | | |
+
+## 8. Pendiente de verificar
+
+- _(dudas abiertas que aún no se han probado)_
+
+---
+
+## Historial
+
+| Versión | Fecha | Cambio |
+|---|---|---|
+| v1 | 18-oct-2026 | Esqueleto inicial |
+| v1.1 | 18-oct-2026 | Reglas SCR/MTF del manual v6.1.0 (`//`, `PERCENTFORMAT`, orden, `UPDATEONCLOSE`) |
