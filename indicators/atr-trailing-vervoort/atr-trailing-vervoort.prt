@@ -1,0 +1,200 @@
+REM ============================================================
+REM ATR TRAILING VERVOORT (indicador) - v1.6 - 2026-10-18
+REM v1.6: COLORBETWEEN una sola vez por vela con color variable (la v1.5
+REM       dejaba bandas planas). Leyenda opcional con la variable verLeyenda.
+REM v1.5: leyenda solo con letras, numeros, comas, puntos y guiones
+REM       (v1.4 fallaba: Unauthorized character en el texto).
+REM v1.4: leyenda de senales fija abajo a la izquierda del grafico
+REM       (verLeyenda = 0 para ocultarla).
+REM v1.3: zona coloreada entre las dos lineas (verde: precio sobre el
+REM       muro / rojo: precio bajo el muro).
+REM v1.2: vela semanal construida a mano con las velas diarias
+REM       (TIMEFRAME(weekly) no actualiza la semana en curso en el
+REM       indicador). Parametros visibles en la leyenda.
+REM v1.1: senal 1 = confirmacion semana siguiente al cruce (ADR-0002).
+REM Plataforma: ProRealTime - modulo Indicador (ProBuilder)
+REM Uso: grafico DIARIO. Dibuja la linea diaria y el muro semanal,
+REM      y escribe el codigo de senal encima de la vela.
+REM Misma logica que screeners/scanner-atr-trailing (v1.2).
+REM Si cambias la logica aqui, cambiala tambien en el screener.
+REM ------------------------------------------------------------
+REM VARIABLES DEL INDICADOR (crear en la ventana "Variables",
+REM en este orden; salen en la leyenda entre parentesis):
+REM   atrPer        Integer   14    periodos del ATR (diario y semanal)
+REM   multD         Decimal   2.5   multiplo diario (2.5 ETF / 2.0 accion)
+REM   multW         Decimal   1.5   multiplo semanal (el muro)
+REM   semanaCerrada Integer   1     1 = sabado / 0 = entre semana
+REM   verLeyenda    Boolean   0     1 = muestra la leyenda de senales
+REM Descripciones sugeridas para la ventana de configuracion: ver la ficha
+REM docs/indicators/atr-trailing-vervoort.md
+REM ------------------------------------------------------------
+REM Codigo de senal (un digito por senal activa):
+REM   1 = Giro semanal confirmado / 2 = Pullback / 3 = Ruptura / 4 = Perdida muro
+REM ============================================================
+
+REM --- PARAMETROS FIJOS ----------------------------------------
+maPer1 = 10
+maPer2 = 20
+boPer = 20
+volPer = 20
+
+REM ============================================================
+REM BLOQUE SEMANAL - vela semanal a mano + linea Vervoort
+REM ============================================================
+REM Semana nueva: el dia de la semana baja (p. ej. viernes -> lunes)
+newWeek = (BarIndex = 0) OR (DayOfWeek < DayOfWeek[1])
+
+IF newWeek AND BarIndex > 0 THEN
+   REM Cerrar la semana anterior con sus valores finales (vela de ayer)
+   cl3 = cl2
+   ln3 = ln2
+   cl2 = cl1
+   ln2 = ln1
+   op1 = cwO[1]
+   cl1 = cwC[1]
+   ln1 = lineCur[1]
+   atrDone = atrCur[1]
+   trSum = trSum + trCur[1]
+   nW = nW + 1
+ENDIF
+
+IF newWeek THEN
+   cwO = open
+   cwH = high
+   cwL = low
+ELSE
+   cwH = MAX(cwH, high)
+   cwL = MIN(cwL, low)
+ENDIF
+cwC = close
+
+REM True range y ATR Wilder de la semana en curso
+IF nW = 0 THEN
+   trCur = cwH - cwL
+ELSE
+   trCur = MAX(cwH - cwL, MAX(ABS(cwH - cl1), ABS(cwL - cl1)))
+ENDIF
+IF nW < atrPer THEN
+   atrCur = (trSum + trCur) / (nW + 1)
+ELSE
+   atrCur = (atrDone * (atrPer - 1) + trCur) / atrPer
+ENDIF
+
+REM Trinquete Vervoort de la semana en curso (4 casos)
+IF nW = 0 THEN
+   lineCur = cwC
+ELSIF cwC > ln1 AND cl1 > ln1 THEN
+   lineCur = MAX(ln1, cwC - multW * atrCur)
+ELSIF cwC < ln1 AND cl1 < ln1 THEN
+   lineCur = MIN(ln1, cwC + multW * atrCur)
+ELSIF cwC > ln1 THEN
+   lineCur = cwC - multW * atrCur
+ELSE
+   lineCur = cwC + multW * atrCur
+ENDIF
+
+REM Semana 0 / -1 / -2 segun semanaCerrada
+IF semanaCerrada = 1 THEN
+   wkLine = lineCur
+   wkClose = cwC
+   wkBodyLow = MIN(cwO, cwC)
+   wkPrevClose = cl1
+   wkPrevLine = ln1
+   wkOldClose = cl2
+   wkOldLine = ln2
+ELSE
+   wkLine = ln1
+   wkClose = cl1
+   wkBodyLow = MIN(op1, cl1)
+   wkPrevClose = cl2
+   wkPrevLine = ln2
+   wkOldClose = cl3
+   wkOldLine = ln3
+ENDIF
+
+REM Senal 1 (regla D, ADR-0002): confirmacion una semana despues del cruce
+sig1 = nW >= 3 AND wkOldClose <= wkOldLine AND wkPrevClose > wkPrevLine AND wkClose > wkLine AND wkBodyLow > wkOldLine
+REM Senal 4: perdida del muro
+sig4 = nW >= 2 AND wkClose < wkLine AND wkPrevClose >= wkPrevLine
+wkBull = wkClose > wkLine
+
+REM ============================================================
+REM BLOQUE DIARIO
+REM ============================================================
+atrD = AverageTrueRange[atrPer](close)
+
+IF lineD[1] = 0 THEN
+   lineD = close
+ELSIF close > lineD[1] AND close[1] > lineD[1] THEN
+   lineD = MAX(lineD[1], close - multD * atrD)
+ELSIF close < lineD[1] AND close[1] < lineD[1] THEN
+   lineD = MIN(lineD[1], close + multD * atrD)
+ELSIF close > lineD[1] THEN
+   lineD = close - multD * atrD
+ELSE
+   lineD = close + multD * atrD
+ENDIF
+
+REM Precio sobre el muro semanal en modo soporte
+aboveWall = wkBull AND close > wkLine
+
+REM --- Senal 2: pullback en tendencia ---
+ma10 = Average[maPer1](close)
+ma20 = Average[maPer2](close)
+nearMA10 = ABS(close - ma10) <= atrD
+nearMA20 = ABS(close - ma20) <= atrD
+nearLineD = ABS(close - lineD) <= atrD
+sig2 = aboveWall AND (nearMA10 OR nearMA20 OR nearLineD)
+
+REM --- Senal 3: ruptura momentum ---
+hiN = Highest[boPer](high)
+breakout = close > hiN[1]
+forceBar = close > open AND close > high[1]
+volAvg = Average[volPer](volume)
+volUp = volume > volAvg
+sig3 = breakout AND forceBar AND volUp AND aboveWall
+
+REM ============================================================
+REM CODIGO DE SENAL
+REM ============================================================
+sigCode = 0
+IF sig1 THEN
+   sigCode = sigCode * 10 + 1
+ENDIF
+IF sig2 THEN
+   sigCode = sigCode * 10 + 2
+ENDIF
+IF sig3 THEN
+   sigCode = sigCode * 10 + 3
+ENDIF
+IF sig4 THEN
+   sigCode = sigCode * 10 + 4
+ENDIF
+
+REM ============================================================
+REM DIBUJO
+REM ============================================================
+IF sigCode > 0 THEN
+   DRAWTEXT("#sigCode#", barindex, high + atrD * 0.5) COLOURED("blue")
+ENDIF
+
+REM Leyenda fija (se dibuja una sola vez, anclada a la esquina)
+IF verLeyenda AND BarIndex = 0 THEN
+   DRAWTEXT("Senales. 1 giro semanal confirmado - 2 pullback - 3 ruptura - 4 perdida del muro", 300, 62) COLOURED("dimgray") ANCHOR(BOTTOMLEFT, XSHIFT, YSHIFT)
+   DRAWTEXT("Varias a la vez salen juntas, 23 es pullback y ruptura. Sin numero es sin senal", 300, 46) COLOURED("dimgray") ANCHOR(BOTTOMLEFT, XSHIFT, YSHIFT)
+   DRAWTEXT("Huecos. Precio bajo el muro, o a mas de 1 ATR de MM10, MM20 y linea diaria sin ruptura", 300, 30) COLOURED("dimgray") ANCHOR(BOTTOMLEFT, XSHIFT, YSHIFT)
+ENDIF
+
+REM Zona entre lineas: una sola llamada por vela, color segun el muro
+IF wkBull THEN
+   zr = 0
+   zg = 200
+   zb = 0
+ELSE
+   zr = 230
+   zg = 0
+   zb = 0
+ENDIF
+COLORBETWEEN(lineD, wkLine, zr, zg, zb, 50)
+
+RETURN lineD COLOURED("orange") AS "Diaria ATR x multD", wkLine COLOURED("red") AS "Semanal ATR x multW (muro)"
