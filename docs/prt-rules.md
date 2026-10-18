@@ -1,4 +1,4 @@
-<!-- prt-rules.md · v1.6 · 18-oct-2026 · La Granja -->
+<!-- prt-rules.md · v1.8 · 18-oct-2026 · La Granja -->
 
 # PRT Rules — errores y reglas reales de ProRealTime
 
@@ -27,7 +27,11 @@ Una regla por línea, con este formato:
 
 ## 2. Indicador (IND)
 
-_(vacío)_
+- [IND] En un indicador sobre gráfico diario con datos de fin de día, `TIMEFRAME(weekly)` deja de actualizar la vela semanal en curso en las últimas sesiones. VGT, SNOW y XOM mostraban el viernes 16-oct el muro calculado con el cierre de martes o miércoles. El screener, con el mismo código, sí ve la semana completa (SNOW = señal 4). — Origen: atr-trailing-vervoort v1.1 · 18-oct-2026 · ✅ observado · ⚠️ causa por confirmar
+
+- [IND] `DRAWTEXT` con `ANCHOR`: el texto con `|` dio `Unauthorized character: "a variable name"` (también llevaba `:`, `(`, `)`, `+`, `=` y parámetros de fuente). Con solo letras, números, comas, puntos y guiones compila. El punto de anclaje es el centro del texto. — Origen: atr-trailing-vervoort v1.4/v1.5 · 18-oct-2026 · ✅ confirmada
+- [IND] Dos `COLORBETWEEN` en ramas distintas de un `IF` dejan bandas planas: la zona que no se llama mantiene sus últimos valores. Usar una sola llamada por vela con el color en variables. — Origen: atr-trailing-vervoort v1.5 · 18-oct-2026 · ✅ observado
+- [IND] Las variables del indicador (ventana Variables) salen en la leyenda entre paréntesis, y su descripción en la pantalla de configuración. — Origen: atr-trailing-vervoort v1.2 · 18-oct-2026 · ✅ confirmada
 
 ## 3. ProBacktest / ProOrder (ORD)
 
@@ -37,7 +41,7 @@ _(vacío)_
 
 - [SCR] `DEFPARAM` da error de compilación. — Origen: manual · ⚠️ por confirmar
 - [SCR] Historial máximo: 256 velas (1024 Premium) del timeframe elegido. — Origen: manual · ⚠️ por confirmar
-- [SCR] Resultados visibles: 50 (100 Premium). — Origen: manual · ⚠️ por confirmar
+- [SCR] Resultados visibles: el manual dice 50 (100 Premium), pero la licencia gratuita v13 muestra "up to 100 displayed". Historial: 256 velas. — Origen: debug v2 · 18-oct-2026 · ✅ observado
 - [SCR] Columnas: 3 o 6 según licencia. Solo con una única instrucción `SCREENER`. — Origen: test-columnas v1 · 18-oct-2026 · ✅ confirmada (licencia gratuita = 3)
 - [SCR] Comentarios: el manual ProScreener v6.1.0 usa `//` en sus propios ejemplos. `REM` sigue siendo la opción segura. — Origen: manual v6.1.0 · ⚠️ por confirmar
 - [SCR] `PERCENTFORMAT` multiplica por 100. Pasar la fracción (0,05), no el porcentaje (5). — Origen: manual v6.1.0, p. 9 · ⚠️ por confirmar
@@ -61,6 +65,7 @@ _(vacío)_
 
 | Mensaje de error | Causa | Solución | Script · fecha |
 |---|---|---|---|
+| `Unauthorized character: "a variable name"` (línea con `DRAWTEXT`) | Símbolos en el texto (`\|` probable) | Solo letras, números, comas, puntos y guiones | atr-trailing-vervoort v1.4 · 18-oct-2026 |
 | `Syntax error: This variable is not used in the code: td9, distwall, rsid` | Variables calculadas solo para la línea `SCREENER` de 6 columnas, que estaba comentada | Comentar sus cálculos con `REM [6COL]` | scanner-atr-trailing v1.0 · 18-oct-2026 |
 
 ## 8. Pendiente de verificar
@@ -74,6 +79,8 @@ _(vacío)_
 | Versión | Fecha | Cambio |
 |---|---|---|
 | v1 | 18-oct-2026 | Esqueleto inicial |
+| v1.8 | 18-oct-2026 | DRAWTEXT con símbolos falla; COLORBETWEEN una vez por vela; variables en leyenda |
+| v1.7 | 18-oct-2026 | Indicador: semanal en curso desfasado; ProScreener muestra hasta 100 resultados |
 | v1.6 | 18-oct-2026 | ProScreener gratuito: NYSE sí, Nasdaq y ETF no (observado) |
 | v1.5 | 18-oct-2026 | ETF NYSE Arca no aparecen en ProScreener (licencia gratuita) |
 | v1.4 | 18-oct-2026 | Error confirmado: variable calculada y no usada |
