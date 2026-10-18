@@ -1,5 +1,8 @@
 REM ============================================================
-REM ATR TRAILING VERVOORT (indicador) - v1.1 - 2026-10-18
+REM ATR TRAILING VERVOORT (indicador) - v1.2 - 2026-10-18
+REM v1.2: vela semanal construida a mano con las velas diarias
+REM       (TIMEFRAME(weekly) no actualiza la semana en curso en el
+REM       indicador). Parametros visibles en la leyenda.
 REM v1.1: senal 1 = confirmacion semana siguiente al cruce (ADR-0002).
 REM Plataforma: ProRealTime - modulo Indicador (ProBuilder)
 REM Uso: grafico DIARIO. Dibuja la linea diaria y el muro semanal,
@@ -7,70 +10,106 @@ REM      y escribe el codigo de senal encima de la vela.
 REM Misma logica que screeners/scanner-atr-trailing (v1.2).
 REM Si cambias la logica aqui, cambiala tambien en el screener.
 REM ------------------------------------------------------------
+REM VARIABLES DEL INDICADOR (crear en la ventana "Variables",
+REM en este orden; salen en la leyenda entre parentesis):
+REM   atrPer        Integer   14    periodos del ATR (diario y semanal)
+REM   multD         Decimal   2.5   multiplo diario (2.5 ETF / 2.0 accion)
+REM   multW         Decimal   1.5   multiplo semanal (el muro)
+REM   semanaCerrada Integer   1     1 = sabado / 0 = entre semana
+REM ------------------------------------------------------------
 REM Codigo de senal (un digito por senal activa):
 REM   1 = Giro semanal confirmado / 2 = Pullback / 3 = Ruptura / 4 = Perdida muro
 REM ============================================================
 
-REM --- PARAMETROS (editar aqui) -------------------------------
-isETF = 1
-semanaCerrada = 1
-atrPer = 14
-multW = 1.5
-multETF = 2.5
-multStock = 2.0
+REM --- PARAMETROS FIJOS ----------------------------------------
 maPer1 = 10
 maPer2 = 20
 boPer = 20
 volPer = 20
 
-IF isETF = 1 THEN
-   multD = multETF
-ELSE
-   multD = multStock
+REM ============================================================
+REM BLOQUE SEMANAL - vela semanal a mano + linea Vervoort
+REM ============================================================
+REM Semana nueva: el dia de la semana baja (p. ej. viernes -> lunes)
+newWeek = (BarIndex = 0) OR (DayOfWeek < DayOfWeek[1])
+
+IF newWeek AND BarIndex > 0 THEN
+   REM Cerrar la semana anterior con sus valores finales (vela de ayer)
+   cl3 = cl2
+   ln3 = ln2
+   cl2 = cl1
+   ln2 = ln1
+   op1 = cwO[1]
+   cl1 = cwC[1]
+   ln1 = lineCur[1]
+   atrDone = atrCur[1]
+   trSum = trSum + trCur[1]
+   nW = nW + 1
 ENDIF
 
-REM ============================================================
-REM BLOQUE SEMANAL - linea Vervoort con trinquete
-REM ============================================================
-TIMEFRAME(weekly)
-
-atrW = AverageTrueRange[atrPer](close)
-
-IF lineW[1] = 0 THEN
-   lineW = close
-ELSIF close > lineW[1] AND close[1] > lineW[1] THEN
-   lineW = MAX(lineW[1], close - multW * atrW)
-ELSIF close < lineW[1] AND close[1] < lineW[1] THEN
-   lineW = MIN(lineW[1], close + multW * atrW)
-ELSIF close > lineW[1] THEN
-   lineW = close - multW * atrW
+IF newWeek THEN
+   cwO = open
+   cwH = high
+   cwL = low
 ELSE
-   lineW = close + multW * atrW
+   cwH = MAX(cwH, high)
+   cwL = MIN(cwL, low)
+ENDIF
+cwC = close
+
+REM True range y ATR Wilder de la semana en curso
+IF nW = 0 THEN
+   trCur = cwH - cwL
+ELSE
+   trCur = MAX(cwH - cwL, MAX(ABS(cwH - cl1), ABS(cwL - cl1)))
+ENDIF
+IF nW < atrPer THEN
+   atrCur = (trSum + trCur) / (nW + 1)
+ELSE
+   atrCur = (atrDone * (atrPer - 1) + trCur) / atrPer
 ENDIF
 
-REM wo = desfase: 0 el sabado, 1 entre semana (ultima semana cerrada)
-wo = 1 - semanaCerrada
-wkLine = lineW[wo]
-wkClose = close[wo]
-wkBodyLow = MIN(open[wo], close[wo])
-wkPrevClose = close[wo + 1]
-wkPrevLine = lineW[wo + 1]
-wkOldClose = close[wo + 2]
-wkOldLine = lineW[wo + 2]
+REM Trinquete Vervoort de la semana en curso (4 casos)
+IF nW = 0 THEN
+   lineCur = cwC
+ELSIF cwC > ln1 AND cl1 > ln1 THEN
+   lineCur = MAX(ln1, cwC - multW * atrCur)
+ELSIF cwC < ln1 AND cl1 < ln1 THEN
+   lineCur = MIN(ln1, cwC + multW * atrCur)
+ELSIF cwC > ln1 THEN
+   lineCur = cwC - multW * atrCur
+ELSE
+   lineCur = cwC + multW * atrCur
+ENDIF
 
-REM Senal 1 (regla D, ADR-0002): confirmacion una semana despues del cruce.
-REM   semana -2: cierre en el muro o por debajo (muro antiguo = resistencia)
-REM   semana -1: cierre por encima del muro (cruce al alza)
-REM   semana  0: sigue por encima y su cuerpo entero supera el muro antiguo
-sig1 = wkOldClose <= wkOldLine AND wkPrevClose > wkPrevLine AND wkClose > wkLine AND wkBodyLow > wkOldLine
-sig4 = wkClose < wkLine AND wkPrevClose >= wkPrevLine
+REM Semana 0 / -1 / -2 segun semanaCerrada
+IF semanaCerrada = 1 THEN
+   wkLine = lineCur
+   wkClose = cwC
+   wkBodyLow = MIN(cwO, cwC)
+   wkPrevClose = cl1
+   wkPrevLine = ln1
+   wkOldClose = cl2
+   wkOldLine = ln2
+ELSE
+   wkLine = ln1
+   wkClose = cl1
+   wkBodyLow = MIN(op1, cl1)
+   wkPrevClose = cl2
+   wkPrevLine = ln2
+   wkOldClose = cl3
+   wkOldLine = ln3
+ENDIF
+
+REM Senal 1 (regla D, ADR-0002): confirmacion una semana despues del cruce
+sig1 = nW >= 3 AND wkOldClose <= wkOldLine AND wkPrevClose > wkPrevLine AND wkClose > wkLine AND wkBodyLow > wkOldLine
+REM Senal 4: perdida del muro
+sig4 = nW >= 2 AND wkClose < wkLine AND wkPrevClose >= wkPrevLine
 wkBull = wkClose > wkLine
 
 REM ============================================================
 REM BLOQUE DIARIO
 REM ============================================================
-TIMEFRAME(default)
-
 atrD = AverageTrueRange[atrPer](close)
 
 IF lineD[1] = 0 THEN
@@ -128,4 +167,4 @@ IF sigCode > 0 THEN
    DRAWTEXT("#sigCode#", barindex, high + atrD * 0.5) COLOURED("blue")
 ENDIF
 
-RETURN lineD COLOURED("orange") AS "Linea diaria", wkLine COLOURED("red") AS "Muro semanal"
+RETURN lineD COLOURED("orange") AS "Diaria ATR x multD", wkLine COLOURED("red") AS "Semanal ATR x multW (muro)"
