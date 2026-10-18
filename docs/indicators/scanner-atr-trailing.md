@@ -7,7 +7,7 @@
 | Plataforma | ProRealTime · ProScreener |
 | Fichero | `screeners/scanner-atr-trailing/scanner-atr-trailing.prs` |
 | Versión | v1.2 |
-| Estado | En validación → `docs/validation/scanner-atr-trailing/PRT-001.md` |
+| Estado | Validado (PRT-001 cerrada 2026-10-18) |
 | Decisiones | `docs/decisions/ADR-0001-scanner-atr-trailing-diseno.md` · `ADR-0002-senal1-confirmacion.md` |
 | Tag | `scanner-atr-trailing-prt/v1.2.0` |
 
@@ -18,7 +18,7 @@ Revisar cada sábado la watchlist de valores estudiados y marcar los que dan una
 ## Uso
 
 1. Periodo de la interfaz: **Diario**.
-2. Lista: **ETF** con `isETF = 1`, o **acciones** con `isETF = 0`. Son dos pasadas.
+2. Dos copias guardadas en ProRealTime: `scanner-atr-trailing ETF` (`isETF = 1`) sobre la lista de ETF, y `scanner-atr-trailing ACC` (`isETF = 0`) sobre la de acciones.
 3. Sábado: `semanaCerrada = 1`. Entre semana: `semanaCerrada = 0`.
 4. Orden: columna `Dist52W`, valores más bajos primero (lo más cerca del máximo arriba).
 
