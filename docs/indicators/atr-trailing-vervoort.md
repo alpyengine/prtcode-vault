@@ -7,7 +7,7 @@
 | Plataforma | ProRealTime · Indicador (ProBuilder) |
 | Fichero | `indicators/atr-trailing-vervoort/atr-trailing-vervoort.prt` |
 | Versión | v1.6 |
-| Estado | En validación → `docs/validation/atr-trailing-vervoort/PRT-001.md` |
+| Estado | Validado (PRT-001 cerrada 2026-10-18) |
 | Tag | `atr-trailing-vervoort-prt/v1.6.0` |
 
 ## Propósito
@@ -64,6 +64,10 @@ Con `semanaCerrada = 0`, las señales semanales (1 y 4) se leen de la última se
 ## Limitación
 
 En el historial, el muro y las señales semanales (1 y 4) se recalculan cada día con la semana en curso. Por eso pueden aparecer a mitad de semana. Lo que vale es el valor del último día de cada semana.
+
+## Pendiente para la próxima versión
+
+- Subir un poco el número de señal para que no quede pegado al muro.
 
 ## Historial
 
