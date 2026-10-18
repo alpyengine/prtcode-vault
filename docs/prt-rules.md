@@ -1,4 +1,4 @@
-<!-- prt-rules.md · v1.3 · 18-oct-2026 · La Granja -->
+<!-- prt-rules.md · v1.4 · 18-oct-2026 · La Granja -->
 
 # PRT Rules — errores y reglas reales de ProRealTime
 
@@ -23,7 +23,7 @@ Una regla por línea, con este formato:
 
 ## 1. General ProBuilder (GEN)
 
-_(vacío)_
+- [GEN] Toda variable calculada debe usarse después. Si no, da "Syntax error: This variable is not used in the code". Para dejar código preparado, comenta también sus cálculos (y sus parámetros), no solo la línea de salida. — Origen: scanner-atr-trailing v1.0 · 18-oct-2026 · ✅ confirmada (ProScreener)
 
 ## 2. Indicador (IND)
 
@@ -60,7 +60,7 @@ _(vacío)_
 
 | Mensaje de error | Causa | Solución | Script · fecha |
 |---|---|---|---|
-| _(vacío)_ | | | |
+| `Syntax error: This variable is not used in the code: td9, distwall, rsid` | Variables calculadas solo para la línea `SCREENER` de 6 columnas, que estaba comentada | Comentar sus cálculos con `REM [6COL]` | scanner-atr-trailing v1.0 · 18-oct-2026 |
 
 ## 8. Pendiente de verificar
 
@@ -73,6 +73,7 @@ _(vacío)_
 | Versión | Fecha | Cambio |
 |---|---|---|
 | v1 | 18-oct-2026 | Esqueleto inicial |
+| v1.4 | 18-oct-2026 | Error confirmado: variable calculada y no usada |
 | v1.3 | 18-oct-2026 | Confirmado: 3 columnas en licencia gratuita |
 | v1.2 | 18-oct-2026 | Datos de licencia: gratuita, v13.0 |
 | v1.1 | 18-oct-2026 | Reglas SCR/MTF del manual v6.1.0 (`//`, `PERCENTFORMAT`, orden, `UPDATEONCLOSE`) |
