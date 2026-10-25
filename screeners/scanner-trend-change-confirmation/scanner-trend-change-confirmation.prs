@@ -1,5 +1,5 @@
 REM ============================================================
-REM SCANNER: TREND CHANGE CONFIRMATION - NIVEL 2 - v1.4
+REM SCANNER: TREND CHANGE CONFIRMATION - NIVEL 2 - v1.5
 REM Plataforma: ProRealTime - ProScreener
 REM Periodo: DIARIO
 REM ============================================================
@@ -17,7 +17,6 @@ multW = 1.5
 minScore = 3
 minPrice = 0.5
 minAvgVol = 100000
-useMarketFilter = 1
 
 REM --- CALCULOS BASE ---
 atrD = AverageTrueRange[atrPer](close)
@@ -58,24 +57,6 @@ TIMEFRAME(default)
 REM --- D2: Pendiente EMA200 ---
 emaRising = ema200 > ema200[emaSlopeLook]
 emaFalling = ema200 < ema200[emaSlopeLook]
-
-REM --- Filtro de mercado ---
-EQUITYFRAME("NYSE AMERICAN","SPY")
-mktClose = Close
-EQUITYFRAME(default)
-
-mktEMA200 = ExponentialAverage[200](mktClose)
-mktBull = mktClose > mktEMA200
-mktBear = mktClose < mktEMA200
-
-condMarketBull = 1
-IF useMarketFilter = 1 AND NOT mktBull THEN
-   condMarketBull = 0
-ENDIF
-condMarketBear = 1
-IF useMarketFilter = 1 AND NOT mktBear THEN
-   condMarketBear = 0
-ENDIF
 
 REM --- Scoring bull ---
 bullScore = 0
@@ -179,8 +160,9 @@ ENDIF
 REM --- Filtros finales ---
 condPrice = close > minPrice
 condLiq = volAvg > minAvgVol
-filterBull = Dir = 1 AND condMarketBull
-filterBear = Dir = 2 AND condMarketBear
+
+filterBull = Dir = 1
+filterBear = Dir = 2
 anyDir = filterBull OR filterBear
 
 REM --- Salida (3 columnas) ---
