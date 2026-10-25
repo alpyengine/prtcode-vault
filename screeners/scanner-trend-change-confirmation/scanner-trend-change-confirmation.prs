@@ -1,5 +1,5 @@
 REM ============================================================
-REM SCANNER: TREND CHANGE CONFIRMATION - NIVEL 2 - v1.3
+REM SCANNER: TREND CHANGE CONFIRMATION - NIVEL 2 - v1.4
 REM Plataforma: ProRealTime - ProScreener
 REM Periodo: DIARIO
 REM ============================================================
@@ -60,7 +60,7 @@ emaRising = ema200 > ema200[emaSlopeLook]
 emaFalling = ema200 < ema200[emaSlopeLook]
 
 REM --- Filtro de mercado ---
-EQUITYFRAME("SPY")
+EQUITYFRAME("NYSE AMERICAN","SPY")
 mktClose = Close
 EQUITYFRAME(default)
 
