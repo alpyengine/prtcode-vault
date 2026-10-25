@@ -1,29 +1,7 @@
 REM ============================================================
-REM SCANNER: TREND CHANGE CONFIRMATION (Nivel 2) - v1.1
+REM SCANNER: TREND CHANGE CONFIRMATION - NIVEL 2 - v1.2
 REM Plataforma: ProRealTime - ProScreener
 REM Periodo: DIARIO
-REM ------------------------------------------------------------
-REM v1.1:
-REM  - Reducido a 3 columnas (Senal, BullSc, BearSc) por limite
-REM    de columnas de la licencia.
-REM  - Anadido filtro de regimen de mercado (SPY vs EMA200).
-REM  - Nota de fallback para ADX segun version de PRT.
-REM ------------------------------------------------------------
-REM OBJETIVO:
-REM Detectar cambios de tendencia con confirmacion estructural
-REM y de timeframe superior. 5 capas, score 0-5 por direccion,
-REM 4 fases.
-REM
-REM CAPAS:
-REM   A2 - ADX cayendo (agotamiento)
-REM   C1 - BOS (ruptura de estructura)
-REM   C2 - Fallo de ruptura (failed breakout)
-REM   D1 - Alineacion semanal (muro Vervoort)
-REM   D2 - Pendiente EMA200
-REM
-REM Senal = Dir*10 + Phase
-REM   Dir: 1=Bull, 2=Bear
-REM   Phase: 1=Agotamiento, 2=PrimerAviso, 3=Confirmado, 4=Fallido
 REM ============================================================
 
 REM --- PARAMETROS ---
@@ -44,23 +22,22 @@ useMarketFilter = 1
 REM --- CALCULOS BASE ---
 atrD = AverageTrueRange[atrPer](close)
 ema200 = EMA[emaPer](close)
-REM Si ADX da error, cambia esta linea por ADX[adxPer] o ADX(adxPer)
-adxD = ADX[adxPer](close)
+adxD = ADX[adxPer]
 volAvg = Average[20](volume)
 
-REM --- CAPA A2: ADX cayendo ---
+REM --- A2: ADX cayendo ---
 A2 = adxD < adxD[adxLook] AND adxD < adxMax
 
-REM --- CAPA C1: BOS ---
+REM --- C1: BOS ---
 bullBOS = close > highest[bosLook](high[1])
 bearBOS = close < lowest[bosLook](low[1])
 
-REM --- CAPA C2: Fallo de ruptura ---
+REM --- C2: Fallo de ruptura ---
 barMid = low + (high - low) * 0.5
 bullFailBear = low < lowest[failLook](low[1]) AND close > open AND close > barMid
 bearFailBull = high > highest[failLook](high[1]) AND close < open AND close < barMid
 
-REM --- CAPA D1: Alineacion semanal (muro Vervoort) ---
+REM --- D1: Alineacion semanal Vervoort ---
 TIMEFRAME(weekly)
 atrW = AverageTrueRange[atrPer](close)
 IF lineW[1] = 0 THEN
@@ -78,13 +55,15 @@ wkBull = close > lineW AND close[1] > lineW[1]
 wkBear = close < lineW AND close[1] < lineW[1]
 TIMEFRAME(default)
 
-REM --- CAPA D2: Pendiente EMA200 ---
+REM --- D2: Pendiente EMA200 ---
 emaRising = ema200 > ema200[emaSlopeLook]
 emaFalling = ema200 < ema200[emaSlopeLook]
 
-REM --- FILTRO DE MERCADO ---
-REM Cambia SPY por IBEX35 si operas solo mercado espanol
-mktClose = CLOSE(SPY)
+REM --- Filtro de mercado ---
+EQUITYFRAME("SPY")
+mktClose = Close
+EQUITYFRAME(default)
+
 mktEMA200 = EMA[200](mktClose)
 mktBull = mktClose > mktEMA200
 mktBear = mktClose < mktEMA200
@@ -98,7 +77,7 @@ IF useMarketFilter = 1 AND NOT mktBear THEN
    condMarketBear = 0
 ENDIF
 
-REM --- SCORING BULL ---
+REM --- Scoring bull ---
 bullScore = 0
 IF A2 THEN
    bullScore = bullScore + 1
@@ -116,7 +95,7 @@ IF emaRising THEN
    bullScore = bullScore + 1
 ENDIF
 
-REM --- SCORING BEAR ---
+REM --- Scoring bear ---
 bearScore = 0
 IF A2 THEN
    bearScore = bearScore + 1
@@ -134,7 +113,7 @@ IF emaFalling THEN
    bearScore = bearScore + 1
 ENDIF
 
-REM --- DIRECCION DOMINANTE ---
+REM --- Direccion dominante ---
 Dir = 0
 IF bullScore >= minScore AND bullScore > bearScore THEN
    Dir = 1
@@ -143,7 +122,7 @@ IF bearScore >= minScore AND bearScore > bullScore THEN
    Dir = 2
 ENDIF
 
-REM --- FASE ---
+REM --- Fase ---
 Phase = 0
 IF Dir = 1 THEN
    structureBull = bullBOS OR bullFailBear
@@ -188,7 +167,7 @@ IF Dir = 2 THEN
    ENDIF
 ENDIF
 
-REM --- CODIGO COMBINADO ---
+REM --- Codigo combinado ---
 Senal = 0
 IF Dir = 1 THEN
    Senal = 10 + Phase
@@ -197,35 +176,12 @@ IF Dir = 2 THEN
    Senal = 20 + Phase
 ENDIF
 
-REM --- STOP Y TARGET (disponibles aunque no se muestren) ---
-bullStop = lowest[5](low) - atrD * 0.5
-bearStop = highest[5](high) + atrD * 0.5
-Stop = 0
-IF Dir = 1 THEN
-   Stop = bullStop
-ENDIF
-IF Dir = 2 THEN
-   Stop = bearStop
-ENDIF
-
-Target = 0
-IF Dir = 1 THEN
-   Target = highest[50](high)
-ENDIF
-IF Dir = 2 THEN
-   Target = lowest[50](low)
-ENDIF
-
-REM --- FILTROS ---
+REM --- Filtros finales ---
 condPrice = close > minPrice
 condLiq = volAvg > minAvgVol
-
 filterBull = Dir = 1 AND condMarketBull
 filterBear = Dir = 2 AND condMarketBear
 anyDir = filterBull OR filterBear
 
-REM --- SALIDA (3 columnas) ---
+REM --- Salida (3 columnas) ---
 SCREENER[anyDir AND condPrice AND condLiq](Senal AS "Senal", bullScore AS "BullSc", bearScore AS "BearSc")
-
-REM Alternativa 3 columnas orientada a accion (descomenta y borra la de arriba):
-REM SCREENER[anyDir AND condPrice AND condLiq](Senal AS "Senal", Stop AS "Stop", Target AS "Target")
