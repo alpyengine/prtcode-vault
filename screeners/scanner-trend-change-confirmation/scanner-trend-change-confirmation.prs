@@ -1,0 +1,211 @@
+REM ============================================================
+REM SCANNER: TREND CHANGE CONFIRMATION (Nivel 2) - v1.0
+REM Plataforma: ProRealTime - ProScreener
+REM Periodo: DIARIO
+REM ------------------------------------------------------------
+REM OBJETIVO:
+REM Detectar cambios de tendencia con confirmacion estructural
+REM y de timeframe superior. Combina 5 capas de confirmacion
+REM en un score y clasifica la fase del giro.
+REM
+REM CAPAS:
+REM   A2 - ADX cayendo (agotamiento de la tendencia previa)
+REM   C1 - BOS (ruptura de estructura: rompe maximo/minimo de N)
+REM   C2 - Fallo de ruptura (failed breakout)
+REM   D1 - Alineacion semanal (muro Vervoort semanal)
+REM   D2 - Pendiente EMA200 (tendencia de fondo)
+REM
+REM SCORE: 0-5 por direccion (Bull / Bear). Se muestran solo
+REM valores con score >= minScore y direccion dominante clara.
+REM
+REM FASES:
+REM   1 = Agotamiento   (solo A2, sin estructura rota)
+REM   2 = PrimerAviso   (estructura rota + 1 confirmacion HTF)
+REM   3 = Confirmado    (estructura rota + 2 confirmaciones HTF)
+REM   4 = Fallido       (estructura rota contra ambas HTF)
+REM
+REM COLUMNA Senal:
+REM   Decenas = direccion (1=Bull, 2=Bear)
+REM   Unidades = fase (1-4)
+REM   Ej: 13 = Bull Confirmado, 22 = Bear PrimerAviso
+REM ============================================================
+
+REM --- PARAMETROS (editar aqui) ---
+atrPer = 14
+adxPer = 14
+emaPer = 200
+bosLook = 20
+failLook = 20
+adxLook = 5
+adxMax = 25
+emaSlopeLook = 10
+multW = 1.5
+minScore = 3
+minPrice = 0.5
+minAvgVol = 100000
+
+REM --- CALCULOS BASE ---
+atrD = AverageTrueRange[atrPer](close)
+ema200 = EMA[emaPer](close)
+adxD = ADX[adxPer](close)
+volAvg = Average[20](volume)
+
+REM --- CAPA A2: ADX cayendo (agotamiento) ---
+A2 = adxD < adxD[adxLook] AND adxD < adxMax
+
+REM --- CAPA C1: BOS (ruptura de estructura) ---
+bullBOS = close > highest[bosLook](high[1])
+bearBOS = close < lowest[bosLook](low[1])
+
+REM --- CAPA C2: Fallo de ruptura ---
+barMid = low + (high - low) * 0.5
+bullFailBear = low < lowest[failLook](low[1]) AND close > open AND close > barMid
+bearFailBull = high > highest[failLook](high[1]) AND close < open AND close < barMid
+
+REM --- CAPA D1: Alineacion semanal (muro Vervoort) ---
+TIMEFRAME(weekly)
+atrW = AverageTrueRange[atrPer](close)
+IF lineW[1] = 0 THEN
+   lineW = close
+ELSIF close > lineW[1] AND close[1] > lineW[1] THEN
+   lineW = MAX(lineW[1], close - multW * atrW)
+ELSIF close < lineW[1] AND close[1] < lineW[1] THEN
+   lineW = MIN(lineW[1], close + multW * atrW)
+ELSIF close > lineW[1] THEN
+   lineW = close - multW * atrW
+ELSE
+   lineW = close + multW * atrW
+ENDIF
+wkBull = close > lineW AND close[1] > lineW[1]
+wkBear = close < lineW AND close[1] < lineW[1]
+TIMEFRAME(default)
+
+REM --- CAPA D2: Pendiente EMA200 ---
+emaRising = ema200 > ema200[emaSlopeLook]
+emaFalling = ema200 < ema200[emaSlopeLook]
+
+REM --- SCORING BULL ---
+bullScore = 0
+IF A2 THEN
+   bullScore = bullScore + 1
+ENDIF
+IF bullBOS THEN
+   bullScore = bullScore + 1
+ENDIF
+IF bullFailBear THEN
+   bullScore = bullScore + 1
+ENDIF
+IF wkBull THEN
+   bullScore = bullScore + 1
+ENDIF
+IF emaRising THEN
+   bullScore = bullScore + 1
+ENDIF
+
+REM --- SCORING BEAR ---
+bearScore = 0
+IF A2 THEN
+   bearScore = bearScore + 1
+ENDIF
+IF bearBOS THEN
+   bearScore = bearScore + 1
+ENDIF
+IF bearFailBull THEN
+   bearScore = bearScore + 1
+ENDIF
+IF wkBear THEN
+   bearScore = bearScore + 1
+ENDIF
+IF emaFalling THEN
+   bearScore = bearScore + 1
+ENDIF
+
+REM --- DIRECCION DOMINANTE ---
+Dir = 0
+IF bullScore >= minScore AND bullScore > bearScore THEN
+   Dir = 1
+ENDIF
+IF bearScore >= minScore AND bearScore > bullScore THEN
+   Dir = 2
+ENDIF
+
+REM --- FASE ---
+Phase = 0
+IF Dir = 1 THEN
+   structureBull = bullBOS OR bullFailBear
+   htfBull = 0
+   IF wkBull THEN
+      htfBull = htfBull + 1
+   ENDIF
+   IF emaRising THEN
+      htfBull = htfBull + 1
+   ENDIF
+   IF structureBull THEN
+      IF htfBull >= 2 THEN
+         Phase = 3
+      ELSIF htfBull >= 1 THEN
+         Phase = 2
+      ELSE
+         Phase = 4
+      ENDIF
+   ELSIF A2 THEN
+      Phase = 1
+   ENDIF
+ENDIF
+IF Dir = 2 THEN
+   structureBear = bearBOS OR bearFailBull
+   htfBear = 0
+   IF wkBear THEN
+      htfBear = htfBear + 1
+   ENDIF
+   IF emaFalling THEN
+      htfBear = htfBear + 1
+   ENDIF
+   IF structureBear THEN
+      IF htfBear >= 2 THEN
+         Phase = 3
+      ELSIF htfBear >= 1 THEN
+         Phase = 2
+      ELSE
+         Phase = 4
+      ENDIF
+   ELSIF A2 THEN
+      Phase = 1
+   ENDIF
+ENDIF
+
+REM --- CODIGO COMBINADO (decenas=Dir, unidades=Phase) ---
+Senal = 0
+IF Dir = 1 THEN
+   Senal = 10 + Phase
+ENDIF
+IF Dir = 2 THEN
+   Senal = 20 + Phase
+ENDIF
+
+REM --- STOP Y TARGET ---
+bullStop = lowest[5](low) - atrD * 0.5
+bearStop = highest[5](high) + atrD * 0.5
+Stop = 0
+IF Dir = 1 THEN
+   Stop = bullStop
+ENDIF
+IF Dir = 2 THEN
+   Stop = bearStop
+ENDIF
+
+Target = 0
+IF Dir = 1 THEN
+   Target = highest[50](high)
+ENDIF
+IF Dir = 2 THEN
+   Target = lowest[50](low)
+ENDIF
+
+REM --- FILTROS ---
+condPrice = close > minPrice
+condLiq = volAvg > minAvgVol
+anyDir = Dir > 0
+
+REM --- SALIDA ---
+SCREENER[anyDir AND condPrice AND condLiq](Senal AS "Senal", bullScore AS "BullSc", bearScore AS "BearSc", A2 AS "A2_ADX", bullBOS AS "C1_Bull", bearBOS AS "C1_Bear", bullFailBear AS "C2_Bull", bearFailBull AS "C2_Bear", wkBull AS "D1_WBull", wkBear AS "D1_WBear", emaRising AS "D2_EMAup", emaFalling AS "D2_EMAdn", Stop AS "Stop", Target AS "Target")
