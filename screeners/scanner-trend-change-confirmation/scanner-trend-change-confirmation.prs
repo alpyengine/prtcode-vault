@@ -1,5 +1,5 @@
 REM ============================================================
-REM SCANNER: TREND CHANGE CONFIRMATION - NIVEL 2 - v1.5
+REM SCANNER: TREND CHANGE CONFIRMATION - NIVEL 2 - v1.6 (FINAL)
 REM Plataforma: ProRealTime - ProScreener
 REM Periodo: DIARIO
 REM ============================================================
@@ -19,7 +19,6 @@ minPrice = 0.5
 minAvgVol = 100000
 
 REM --- CALCULOS BASE ---
-atrD = AverageTrueRange[atrPer](close)
 ema200 = ExponentialAverage[emaPer](close)
 adxD = ADX[adxPer]
 volAvg = Average[20](volume)
@@ -160,7 +159,6 @@ ENDIF
 REM --- Filtros finales ---
 condPrice = close > minPrice
 condLiq = volAvg > minAvgVol
-
 filterBull = Dir = 1
 filterBear = Dir = 2
 anyDir = filterBull OR filterBear
