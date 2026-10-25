@@ -1,36 +1,32 @@
 REM ============================================================
-REM SCANNER: TREND CHANGE CONFIRMATION (Nivel 2) - v1.0
+REM SCANNER: TREND CHANGE CONFIRMATION (Nivel 2) - v1.1
 REM Plataforma: ProRealTime - ProScreener
 REM Periodo: DIARIO
 REM ------------------------------------------------------------
+REM v1.1:
+REM  - Reducido a 3 columnas (Senal, BullSc, BearSc) por limite
+REM    de columnas de la licencia.
+REM  - Anadido filtro de regimen de mercado (SPY vs EMA200).
+REM  - Nota de fallback para ADX segun version de PRT.
+REM ------------------------------------------------------------
 REM OBJETIVO:
 REM Detectar cambios de tendencia con confirmacion estructural
-REM y de timeframe superior. Combina 5 capas de confirmacion
-REM en un score y clasifica la fase del giro.
+REM y de timeframe superior. 5 capas, score 0-5 por direccion,
+REM 4 fases.
 REM
 REM CAPAS:
-REM   A2 - ADX cayendo (agotamiento de la tendencia previa)
-REM   C1 - BOS (ruptura de estructura: rompe maximo/minimo de N)
+REM   A2 - ADX cayendo (agotamiento)
+REM   C1 - BOS (ruptura de estructura)
 REM   C2 - Fallo de ruptura (failed breakout)
-REM   D1 - Alineacion semanal (muro Vervoort semanal)
-REM   D2 - Pendiente EMA200 (tendencia de fondo)
+REM   D1 - Alineacion semanal (muro Vervoort)
+REM   D2 - Pendiente EMA200
 REM
-REM SCORE: 0-5 por direccion (Bull / Bear). Se muestran solo
-REM valores con score >= minScore y direccion dominante clara.
-REM
-REM FASES:
-REM   1 = Agotamiento   (solo A2, sin estructura rota)
-REM   2 = PrimerAviso   (estructura rota + 1 confirmacion HTF)
-REM   3 = Confirmado    (estructura rota + 2 confirmaciones HTF)
-REM   4 = Fallido       (estructura rota contra ambas HTF)
-REM
-REM COLUMNA Senal:
-REM   Decenas = direccion (1=Bull, 2=Bear)
-REM   Unidades = fase (1-4)
-REM   Ej: 13 = Bull Confirmado, 22 = Bear PrimerAviso
+REM Senal = Dir*10 + Phase
+REM   Dir: 1=Bull, 2=Bear
+REM   Phase: 1=Agotamiento, 2=PrimerAviso, 3=Confirmado, 4=Fallido
 REM ============================================================
 
-REM --- PARAMETROS (editar aqui) ---
+REM --- PARAMETROS ---
 atrPer = 14
 adxPer = 14
 emaPer = 200
@@ -43,17 +39,19 @@ multW = 1.5
 minScore = 3
 minPrice = 0.5
 minAvgVol = 100000
+useMarketFilter = 1
 
 REM --- CALCULOS BASE ---
 atrD = AverageTrueRange[atrPer](close)
 ema200 = EMA[emaPer](close)
+REM Si ADX da error, cambia esta linea por ADX[adxPer] o ADX(adxPer)
 adxD = ADX[adxPer](close)
 volAvg = Average[20](volume)
 
-REM --- CAPA A2: ADX cayendo (agotamiento) ---
+REM --- CAPA A2: ADX cayendo ---
 A2 = adxD < adxD[adxLook] AND adxD < adxMax
 
-REM --- CAPA C1: BOS (ruptura de estructura) ---
+REM --- CAPA C1: BOS ---
 bullBOS = close > highest[bosLook](high[1])
 bearBOS = close < lowest[bosLook](low[1])
 
@@ -83,6 +81,22 @@ TIMEFRAME(default)
 REM --- CAPA D2: Pendiente EMA200 ---
 emaRising = ema200 > ema200[emaSlopeLook]
 emaFalling = ema200 < ema200[emaSlopeLook]
+
+REM --- FILTRO DE MERCADO ---
+REM Cambia SPY por IBEX35 si operas solo mercado espanol
+mktClose = CLOSE(SPY)
+mktEMA200 = EMA[200](mktClose)
+mktBull = mktClose > mktEMA200
+mktBear = mktClose < mktEMA200
+
+condMarketBull = 1
+IF useMarketFilter = 1 AND NOT mktBull THEN
+   condMarketBull = 0
+ENDIF
+condMarketBear = 1
+IF useMarketFilter = 1 AND NOT mktBear THEN
+   condMarketBear = 0
+ENDIF
 
 REM --- SCORING BULL ---
 bullScore = 0
@@ -174,7 +188,7 @@ IF Dir = 2 THEN
    ENDIF
 ENDIF
 
-REM --- CODIGO COMBINADO (decenas=Dir, unidades=Phase) ---
+REM --- CODIGO COMBINADO ---
 Senal = 0
 IF Dir = 1 THEN
    Senal = 10 + Phase
@@ -183,7 +197,7 @@ IF Dir = 2 THEN
    Senal = 20 + Phase
 ENDIF
 
-REM --- STOP Y TARGET ---
+REM --- STOP Y TARGET (disponibles aunque no se muestren) ---
 bullStop = lowest[5](low) - atrD * 0.5
 bearStop = highest[5](high) + atrD * 0.5
 Stop = 0
@@ -205,7 +219,13 @@ ENDIF
 REM --- FILTROS ---
 condPrice = close > minPrice
 condLiq = volAvg > minAvgVol
-anyDir = Dir > 0
 
-REM --- SALIDA ---
-SCREENER[anyDir AND condPrice AND condLiq](Senal AS "Senal", bullScore AS "BullSc", bearScore AS "BearSc", A2 AS "A2_ADX", bullBOS AS "C1_Bull", bearBOS AS "C1_Bear", bullFailBear AS "C2_Bull", bearFailBull AS "C2_Bear", wkBull AS "D1_WBull", wkBear AS "D1_WBear", emaRising AS "D2_EMAup", emaFalling AS "D2_EMAdn", Stop AS "Stop", Target AS "Target")
+filterBull = Dir = 1 AND condMarketBull
+filterBear = Dir = 2 AND condMarketBear
+anyDir = filterBull OR filterBear
+
+REM --- SALIDA (3 columnas) ---
+SCREENER[anyDir AND condPrice AND condLiq](Senal AS "Senal", bullScore AS "BullSc", bearScore AS "BearSc")
+
+REM Alternativa 3 columnas orientada a accion (descomenta y borra la de arriba):
+REM SCREENER[anyDir AND condPrice AND condLiq](Senal AS "Senal", Stop AS "Stop", Target AS "Target")
