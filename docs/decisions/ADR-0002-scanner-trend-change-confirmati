@@ -1,0 +1,31 @@
+# ADR-0002: Diseño del scanner Trend Change Confirmation
+
+**Fecha:** 2026-10-25
+**Estado:** Aceptado
+**Contexto:** Necesidad de detectar cambios de tendencia con más información que una señal binaria.
+
+## Decisión
+
+Implementar un scanner de 5 capas con scoring 0–5, clasificación en 4 fases y código de señal combinado (Dir*10 + Phase).
+
+## Capas elegidas
+
+- A2 (ADX cayendo): contexto de agotamiento.
+- C1 (BOS): ruptura de estructura, la señal más fiable.
+- C2 (fallo de ruptura): trampa de mercado, señal de alta convicción.
+- D1 (semanal Vervoort): confirmación de timeframe superior.
+- D2 (EMA200 slope): tendencia de fondo.
+
+## Alternativas rechazadas
+
+- **Señal binaria única (solo BOS)**: demasiado ruido, sin contexto.
+- **Cruce MACD como señal principal**: lagea y da falsos positivos en rangos.
+- **RSI sobrevendido como señal**: RSI puede quedarse en 20 durante semanas.
+- **Un solo timeframe**: sin HTF, el scanner opera contra la tendencia mayor.
+
+## Consecuencias
+
+- Más columnas de salida (14) que scanners anteriores.
+- Requiere interpretación, no es plug-and-play.
+- D2 lagea: muchos Bull sólidos aparecen como PrimerAviso, no Confirmado.
+- Depende del indicador Vervoort semanal.
