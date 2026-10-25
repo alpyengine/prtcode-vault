@@ -1,5 +1,5 @@
 REM ============================================================
-REM SCANNER: TREND CHANGE CONFIRMATION - NIVEL 2 - v1.2
+REM SCANNER: TREND CHANGE CONFIRMATION - NIVEL 2 - v1.3
 REM Plataforma: ProRealTime - ProScreener
 REM Periodo: DIARIO
 REM ============================================================
@@ -21,7 +21,7 @@ useMarketFilter = 1
 
 REM --- CALCULOS BASE ---
 atrD = AverageTrueRange[atrPer](close)
-ema200 = EMA[emaPer](close)
+ema200 = ExponentialAverage[emaPer](close)
 adxD = ADX[adxPer]
 volAvg = Average[20](volume)
 
@@ -64,7 +64,7 @@ EQUITYFRAME("SPY")
 mktClose = Close
 EQUITYFRAME(default)
 
-mktEMA200 = EMA[200](mktClose)
+mktEMA200 = ExponentialAverage[200](mktClose)
 mktBull = mktClose > mktEMA200
 mktBear = mktClose < mktEMA200
 
