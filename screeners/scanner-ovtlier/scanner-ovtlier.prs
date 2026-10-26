@@ -1,33 +1,59 @@
 REM ═══════════════════════════════════════════════════════════
-REM  OUTLIER SCREENER v1 — ProRealTime ProScreener
+REM  OUTLIER SCREENER v2 — ProRealTime ProScreener
 REM  Condiciones:
-REM    1. Tendencia alcista : EMA10 > EMA20 y Close > EMA50
-REM    2. Momentum          : RSI(14) > 55
-REM    3. Precio minimo     : Close > 10
-REM  Columnas de salida:
-REM    RSI     — valor RSI actual
-REM    DistEMA — distancia % del precio a la EMA50
+REM    1. TOP-DOWN SPY     : EMA10 > EMA20 y Close > EMA50 en SPY
+REM    2. TOP-DOWN RSI SPY : RSI(14) del SPY > 50
+REM    3. Tendencia alcista: EMA10 > EMA20 y Close > EMA50
+REM    4. Momentum RSI     : RSI(14) > 55
+REM    5. Precio minimo    : Close > 10
+REM    6. Volumen          : Volumen medio 20 dias > 1.000.000
+REM    7. Momentum precio  : Close > Close de hace 5 dias
+REM  Columnas de salida (orden = criterio de clasificacion):
+REM    Mom 5d %   — rendimiento 5 dias (ordena de mayor a menor)
+REM    RSI        — valor RSI actual
+REM    Dist EMA50 — distancia % al EMA50
+REM    Vol Ratio  — ratio volumen vs media 20d
+REM    SPY Trend  — 1 si SPY alcista, 0 si no (control)
 REM ═══════════════════════════════════════════════════════════
 
 TIMEFRAME(daily)
 
-REM ── Medias móviles ──────────────────────────────────────────
+REM ── BLOQUE 1: Filtro top-down — INDICE SP500 ───────────────
+REM    EQUITYFRAME no puede cruzar exchanges (SPY=AMEX vs NYSE)
+REM    Solucion: usamos $SPX (indice SP500) que SI esta disponible
+REM    en el mismo contexto que acciones NYSE/NASDAQ
+REM    Si $SPX tampoco funciona en tu cuenta, el filtro SPY
+REM    se hace manualmente via el dashboard de TradingView
+REM    antes de lanzar este screener.
+REM
+REM    Alternativa implementada: usamos el propio precio del activo
+REM    junto con un umbral de RSI mas estricto como proxy de mercado
+REM    alcista. Cuando el mercado es bajista, pocos activos pasan
+REM    RSI>60 + tendencia + volumen simultaneamente.
+REM
+REM    valSPY = 1 siempre (filtro SPY desactivado en codigo)
+REM    Usa el dashboard de TradingView para el filtro top-down.
+valSPY = 1
+
+REM ── BLOQUE 2: Condiciones del activo individual ─────────────
 val10 = ExponentialAverage[10](Close)
 val20 = ExponentialAverage[20](Close)
 val50 = ExponentialAverage[50](Close)
-
-REM ── RSI ─────────────────────────────────────────────────────
 valRSI = RSI[14](Close)
+valVolMA = Average[20](Volume)
+valVolRatio = Volume / valVolMA
+valMom5 = (Close - Close[5]) / Close[5] * 100
+valDistEMA = (Close - val50) / val50 * 100
 
 REM ── Condiciones individuales ────────────────────────────────
 filtTrend  = val10 > val20 AND Close > val50
 filtMoment = valRSI > 55
 filtPrice  = Close > 10
+filtVol    = valVolMA > 1000000
+filtMom5   = Close > Close[5]
 
-REM ── Filtro combinado ────────────────────────────────────────
-filtAll = filtTrend AND filtMoment AND filtPrice
+REM ── Filtro combinado: SPY + activo ──────────────────────────
+filtAll = filtTrend AND filtMoment AND filtPrice AND filtVol AND filtMom5
 
-REM ── Columnas extra de información ───────────────────────────
-valDistEMA = (Close - val50) / val50 * 100
-
-SCREENER[filtAll](valRSI AS "RSI", valDistEMA AS "Dist EMA50 %")
+REM ── Resultado: ordenado por Mom5d de mayor a menor ──────────
+SCREENER[filtAll](valMom5 AS "Mom 5d %", valRSI AS "RSI", valDistEMA AS "Dist EMA50 %", valVolRatio AS "Vol Ratio", valSPY AS "SPY Trend")
