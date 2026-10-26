@@ -1,24 +1,27 @@
 REM ═══════════════════════════════════════════════════════════
-REM  OUTLIER SCREENER v3 — ProRealTime ProScreener
-REM  Mejoras vs v2:
-REM    - Filtro volumen corregido (umbral x100 para ProRealTime)
-REM    - Añadido filtro EMA200 (tendencia largo plazo)
-REM    - Añadido RSI minimo subido a 58 para mayor calidad
-REM    - Nueva columna: Fuerza Relativa 20d vs media del mercado
-REM    - Nueva columna: ATR% (volatilidad normalizada)
+REM  OUTLIER SCREENER v4 — ProRealTime ProScreener
+REM  Mejoras y correcciones vs v3:
+REM    - Umbral de volumen corregido a 500.000 acciones medias 20d
+REM    - Nuevo filtro de liquidez monetaria: dollar volume > 5M
+REM    - AverageTrueRange[14] corregido con parametro (Close)
+REM    - Renombrada "RS 20d %" a "Ret 20d %" (no era fuerza relativa
+REM      real, era retorno absoluto del activo)
+REM    - Eliminado bloque inerte valSPY = 1 heredado de v2
 REM  Condiciones:
 REM    1. Tendencia corto : EMA10 > EMA20 y Close > EMA50
 REM    2. Tendencia largo : Close > EMA200
 REM    3. Momentum RSI    : RSI(14) > 58
 REM    4. Precio minimo   : Close > 10
-REM    5. Volumen         : Media 20d > 1.000.000 acciones
-REM    6. Momentum precio : Close > Close[5]
+REM    5. Volumen         : Media 20d > 500.000 acciones
+REM    6. Liquidez $      : Dollar volume medio 20d > 5.000.000
+REM    7. Momentum precio : Close > Close[5]
 REM  Columnas (orden = Mom 5d % de mayor a menor):
-REM    Mom 5d %  — rendimiento 5 dias
-REM    RSI       — RSI actual
-REM    RS 20d    — fuerza relativa 20 dias
-REM    ATR %     — volatilidad ATR normalizada
-REM    Vol Ratio — volumen vs media 20d
+REM    Mom 5d %   — rendimiento 5 dias
+REM    RSI        — RSI actual
+REM    Ret 20d %  — retorno de 20 dias
+REM    ATR %      — volatilidad ATR normalizada
+REM    Vol Ratio  — volumen vs media 20d
+REM    Dist EMA50 — distancia % al EMA50
 REM ═══════════════════════════════════════════════════════════
 
 TIMEFRAME(daily)
@@ -32,37 +35,30 @@ val200 = ExponentialAverage[200](Close)
 REM ── RSI ─────────────────────────────────────────────────────
 valRSI = RSI[14](Close)
 
-REM ── Volumen ─────────────────────────────────────────────────
-REM    ProRealTime reporta volumen en unidades reales
-REM    Usamos 100000 como umbral seguro (equivale a ~1M segun escala)
-REM    Si siguen apareciendo acciones con poco volumen subir a 500000
-valVolMA    = Average[20](Volume)
-valVolRatio = Volume / valVolMA
+REM ── Liquidez ───────────────────────────────────────────────
+REM    valVolMA     : media de volumen en acciones (20d)
+REM    valDollarVol : liquidez monetaria media (volumen x precio)
+REM    Ambas se usan como filtros; el ratio es solo informativo
+valVolMA     = Average[20](Volume)
+valVolRatio  = Volume / valVolMA
+valDollarVol = valVolMA * Close
 
-REM ── Momentum precio ─────────────────────────────────────────
-valMom5 = (Close - Close[5]) / Close[5] * 100
+REM ── Rendimientos, distancias y volatilidad ──────────────────
+valMom5    = (Close - Close[5])  / Close[5]  * 100
+valRet20   = (Close - Close[20]) / Close[20] * 100
+valATR     = AverageTrueRange[14](Close)
+valATRpct  = valATR / Close * 100
+valDistEMA = (Close - val50) / val50 * 100
 
-REM ── Fuerza relativa 20 dias ─────────────────────────────────
-REM    Rendimiento del activo vs hace 20 dias
-REM    Valores altos = supera al mercado general
-valRS20 = (Close - Close[20]) / Close[20] * 100
+REM ── Condiciones ────────────────────────────────────────────
+filtTrend    = val10 > val20 AND Close > val50
+filtTrend200 = Close > val200
+filtMoment   = valRSI > 58
+filtPrice    = Close > 10
+filtVol      = valVolMA > 500000
+filtDollar   = valDollarVol > 5000000
+filtMom5     = Close > Close[5]
 
-REM ── ATR normalizado ─────────────────────────────────────────
-REM    ATR en % del precio — mide volatilidad relativa
-REM    Util para calibrar el tamano de posicion (position sizing)
-valATR    = AverageTrueRange[14]
-valATRpct = valATR / Close * 100
+filtAll = filtTrend AND filtTrend200 AND filtMoment AND filtPrice AND filtVol AND filtDollar AND filtMom5
 
-REM ── Condiciones individuales ────────────────────────────────
-filtTrend   = val10 > val20 AND Close > val50
-filtTrend200= Close > val200
-filtMoment  = valRSI > 58
-filtPrice   = Close > 10
-filtVol     = valVolMA > 100000
-filtMom5    = Close > Close[5]
-
-REM ── Filtro combinado ────────────────────────────────────────
-filtAll = filtTrend AND filtTrend200 AND filtMoment AND filtPrice AND filtVol AND filtMom5
-
-REM ── Resultado ordenado por Mom5d descendente ────────────────
-SCREENER[filtAll](valMom5 AS "Mom 5d %", valRSI AS "RSI", valRS20 AS "RS 20d %", valATRpct AS "ATR %", valVolRatio AS "Vol Ratio")
+SCREENER[filtAll](valMom5 AS "Mom 5d %", valRSI AS "RSI", valRet20 AS "Ret 20d %", valATRpct AS "ATR %", valVolRatio AS "Vol Ratio", valDistEMA AS "Dist EMA50 %")
