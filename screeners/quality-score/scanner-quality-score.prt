@@ -1,0 +1,218 @@
+REM ============================================================
+REM SCANNER: QUALITY SCORE COMPOSITE - NIVEL 3 - v1.0
+REM Plataforma: ProRealTime - ProScreener
+REM Periodo: DIARIO
+REM ------------------------------------------------------------
+REM OBJETIVO:
+REM Fusiona el Nivel 1 (Reversal Alert) y Nivel 2 (Trend Change)
+REM en un solo score de 0 a 10. Busca la maxima confluencia:
+REM alerta temprana + confirmacion estructural.
+REM
+REM Senal = Dir*10 + Tier
+REM   Dir: 1=Bull, 2=Bear
+REM   Tier: 1=Aviso(Score 4-5), 2=Buena(6-7), 3=Excelente(8-10)
+REM   Ej: 13 = Bull Excelente
+REM ============================================================
+
+REM --- PARAMETROS ---
+rsiPer = 14
+stochPer = 14
+stochSmooth = 3
+volMult = 1.5
+atrPer = 14
+adxPer = 14
+emaPer = 200
+bosLook = 20
+failLook = 20
+adxLook = 5
+adxMax = 25
+emaSlopeLook = 10
+multW = 1.5
+minTotalScore = 4
+minPrice = 0.5
+minAvgVol = 100000
+
+REM --- INDICADORES BASE ---
+rsiD = RSI[rsiPer](close)
+volAvg = Average[20](volume)
+stochD = Stochastic[stochPer,stochSmooth](close)
+adxD = ADX[adxPer]
+ema200 = ExponentialAverage[emaPer](close)
+
+REM --- MACD ---
+ema12 = ExponentialAverage[12](close)
+ema26 = ExponentialAverage[26](close)
+macdMain = ema12 - ema26
+macdSig = ExponentialAverage[9](macdMain)
+hist = macdMain - macdSig
+
+REM ============================================================
+REM CAPAS NIVEL 1 (Reversal Alert)
+REM ============================================================
+bullDiv = close <= lowest[20](close) AND rsiD > rsiD[5]
+bearDiv = close >= highest[20](close) AND rsiD < rsiD[5]
+
+bullMACD = hist[1] < 0 AND hist > hist[1]
+bearMACD = hist[1] > 0 AND hist < hist[1]
+
+bullRSI = rsiD CROSSES OVER 30
+bearRSI = rsiD CROSSES UNDER 70
+
+bullStoch = stochD CROSSES OVER 20 AND stochD[1] < 20
+bearStoch = stochD CROSSES UNDER 80 AND stochD[1] > 80
+
+bullRev = close > open AND close > high[1] AND volume > volAvg * volMult
+bearRev = close < open AND close < low[1] AND volume > volAvg * volMult
+
+REM ============================================================
+REM CAPAS NIVEL 2 (Trend Change)
+REM ============================================================
+A2 = adxD < adxD[adxLook] AND adxD < adxMax
+
+bullBOS = close > highest[bosLook](high[1])
+bearBOS = close < lowest[bosLook](low[1])
+
+barMid = low + (high - low) * 0.5
+bullFailBear = low < lowest[failLook](low[1]) AND close > open AND close > barMid
+bearFailBull = high > highest[failLook](high[1]) AND close < open AND close < barMid
+
+TIMEFRAME(weekly)
+atrW = AverageTrueRange[atrPer](close)
+IF lineW[1] = 0 THEN
+   lineW = close
+ELSIF close > lineW[1] AND close[1] > lineW[1] THEN
+   lineW = MAX(lineW[1], close - multW * atrW)
+ELSIF close < lineW[1] AND close[1] < lineW[1] THEN
+   lineW = MIN(lineW[1], close + multW * atrW)
+ELSIF close > lineW[1] THEN
+   lineW = close - multW * atrW
+ELSE
+   lineW = close + multW * atrW
+ENDIF
+wkBull = close > lineW AND close[1] > lineW[1]
+wkBear = close < lineW AND close[1] < lineW[1]
+TIMEFRAME(default)
+
+emaRising = ema200 > ema200[emaSlopeLook]
+emaFalling = ema200 < ema200[emaSlopeLook]
+
+REM ============================================================
+REM SCORING BULL (Max 10)
+REM ============================================================
+bullScore = 0
+IF bullDiv THEN
+   bullScore = bullScore + 1
+ENDIF
+IF bullMACD THEN
+   bullScore = bullScore + 1
+ENDIF
+IF bullRSI THEN
+   bullScore = bullScore + 1
+ENDIF
+IF bullStoch THEN
+   bullScore = bullScore + 1
+ENDIF
+IF bullRev THEN
+   bullScore = bullScore + 1
+ENDIF
+
+IF A2 THEN
+   bullScore = bullScore + 1
+ENDIF
+IF bullBOS THEN
+   bullScore = bullScore + 1
+ENDIF
+IF bullFailBear THEN
+   bullScore = bullScore + 1
+ENDIF
+IF wkBull THEN
+   bullScore = bullScore + 1
+ENDIF
+IF emaRising THEN
+   bullScore = bullScore + 1
+ENDIF
+
+REM ============================================================
+REM SCORING BEAR (Max 10)
+REM ============================================================
+bearScore = 0
+IF bearDiv THEN
+   bearScore = bearScore + 1
+ENDIF
+IF bearMACD THEN
+   bearScore = bearScore + 1
+ENDIF
+IF bearRSI THEN
+   bearScore = bearScore + 1
+ENDIF
+IF bearStoch THEN
+   bearScore = bearScore + 1
+ENDIF
+IF bearRev THEN
+   bearScore = bearScore + 1
+ENDIF
+
+IF A2 THEN
+   bearScore = bearScore + 1
+ENDIF
+IF bearBOS THEN
+   bearScore = bearScore + 1
+ENDIF
+IF bearFailBull THEN
+   bearScore = bearScore + 1
+ENDIF
+IF wkBear THEN
+   bearScore = bearScore + 1
+ENDIF
+IF emaFalling THEN
+   bearScore = bearScore + 1
+ENDIF
+
+REM ============================================================
+REM DIRECCION Y TIER (CALIDAD)
+REM ============================================================
+Dir = 0
+IF bullScore >= minTotalScore AND bullScore > bearScore THEN
+   Dir = 1
+ENDIF
+IF bearScore >= minTotalScore AND bearScore > bullScore THEN
+   Dir = 2
+ENDIF
+
+Tier = 0
+IF Dir = 1 THEN
+   IF bullScore >= 8 THEN
+      Tier = 3
+   ELSIF bullScore >= 6 THEN
+      Tier = 2
+   ELSE
+      Tier = 1
+   ENDIF
+ENDIF
+
+IF Dir = 2 THEN
+   IF bearScore >= 8 THEN
+      Tier = 3
+   ELSIF bearScore >= 6 THEN
+      Tier = 2
+   ELSE
+      Tier = 1
+   ENDIF
+ENDIF
+
+REM --- CODIGO COMBINADO (Dir*10 + Tier) ---
+Senal = 0
+IF Dir = 1 THEN
+   Senal = 10 + Tier
+ENDIF
+IF Dir = 2 THEN
+   Senal = 20 + Tier
+ENDIF
+
+REM --- FILTROS FINALES ---
+condPrice = close > minPrice
+condLiq = volAvg > minAvgVol
+anyDir = Dir > 0
+
+REM --- SALIDA (3 columnas) ---
+SCREENER[anyDir AND condPrice AND condLiq](Senal AS "Senal", bullScore AS "BullSc", bearScore AS "BearSc")
