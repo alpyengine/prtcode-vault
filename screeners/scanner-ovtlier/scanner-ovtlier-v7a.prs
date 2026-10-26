@@ -1,0 +1,70 @@
+REM ═══════════════════════════════════════════════════════════
+REM  OUTLIER SCREENER v7a — ProRealTime ProScreener
+REM  ESTADO: EXPERIMENTAL — bajo evaluacion vs v6
+REM  Periodo de test: 3 semanas
+REM  Universo de test: multimercado
+REM  Perfil: BREAKOUT ESTRICTO (base v6 con umbrales endurecidos)
+REM
+REM  Cambios respecto a v6:
+REM    ADX         : 20 -> 25
+REM    RSI         : 58 -> 60
+REM    DollarVol   : 5M -> 10M
+REM    Dist EMA50  : 20% -> 15%
+REM
+REM  Mantiene de v6:
+REM    - EMA10>EMA20 y Close>EMA50 y Close>EMA200
+REM    - EMA50 pendiente > 0
+REM    - VolumeMA20 > 500.000
+REM    - Close > Close[5] y Close > 10
+REM    - Close > Highest[20](Close)[1]  (breakout 20d)
+REM
+REM  Columnas:
+REM    Mom 5d %, RSI, ADX, Breakout %, Ret 20d %,
+REM    ATR %, Vol Ratio, Dist EMA50 %
+REM ═══════════════════════════════════════════════════════════
+
+TIMEFRAME(daily)
+
+REM ── Medias moviles ──────────────────────────────────────────
+val10  = ExponentialAverage[10](Close)
+val20  = ExponentialAverage[20](Close)
+val50  = ExponentialAverage[50](Close)
+val200 = ExponentialAverage[200](Close)
+
+REM ── Momentum, volatilidad y fuerza de tendencia ────────────
+valRSI = RSI[14](Close)
+valADX = ADX[14]
+valATR = AverageTrueRange[14](Close)
+
+REM ── Liquidez ───────────────────────────────────────────────
+valVolMA     = Average[20](Volume)
+valVolRatio  = Volume / valVolMA
+valDollarVol = valVolMA * Close
+
+REM ── Rendimientos, distancias y pendiente ───────────────────
+valMom5    = (Close - Close[5])  / Close[5]  * 100
+valRet20   = (Close - Close[20]) / Close[20] * 100
+valATRpct  = valATR / Close * 100
+valDistEMA = (Close - val50) / val50 * 100
+valSlope50 = (val50 - val50[5]) / val50[5] * 100
+
+REM ── Breakout: maximo de las 20 sesiones previas ────────────
+valHigh20   = Highest[20](Close)[1]
+valBreakout = (Close - valHigh20) / valHigh20 * 100
+
+REM ── Condiciones (umbrales endurecidos) ─────────────────────
+filtTrend    = val10 > val20 AND Close > val50
+filtTrend200 = Close > val200
+filtSlope    = valSlope50 > 0
+filtQuality  = valADX > 25
+filtMoment   = valRSI > 60
+filtPrice    = Close > 10
+filtVol      = valVolMA > 500000
+filtDollar   = valDollarVol > 10000000
+filtMom5     = Close > Close[5]
+filtNotOver  = valDistEMA < 15
+filtBreakout = Close > valHigh20
+
+filtAll = filtTrend AND filtTrend200 AND filtSlope AND filtQuality AND filtMoment AND filtPrice AND filtVol AND filtDollar AND filtMom5 AND filtNotOver AND filtBreakout
+
+SCREENER[filtAll](valMom5 AS "Mom 5d %", valRSI AS "RSI", valADX AS "ADX", valBreakout AS "Breakout %", valRet20 AS "Ret 20d %", valATRpct AS "ATR %", valVolRatio AS "Vol Ratio", valDistEMA AS "Dist EMA50 %")
