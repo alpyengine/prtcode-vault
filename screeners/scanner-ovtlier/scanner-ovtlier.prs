@@ -1,19 +1,22 @@
 REM ═══════════════════════════════════════════════════════════
-REM  OUTLIER SCREENER v5 — ProRealTime ProScreener
-REM  Version vigente. Evolucion de v4 con 3 filtros de calidad:
-REM    + ADX(14) > 20           — tendencia con fuerza real
-REM    + EMA50 con pendiente >0 — tendencia no plana
-REM    + Dist EMA50 < 20%       — evitar sobre-extension
-REM  Mantiene de v4:
+REM  OUTLIER SCREENER v6 — ProRealTime ProScreener
+REM  Perfil BREAKOUT. Evolucion de v5 con filtro de ruptura:
+REM    + Close > Highest[20](Close)[1]  — ruptura de maximos 20d
+REM    + Columna Breakout %             — distancia sobre el max 20d
+REM  Mantiene de v5 (sin cambios):
 REM    - EMA10>EMA20 y Close>EMA50 y Close>EMA200
+REM    - EMA50 pendiente > 0
+REM    - ADX(14) > 20
 REM    - RSI(14) > 58
 REM    - Close > 10
 REM    - VolumeMA20 > 500.000 y DollarVol > 5M
 REM    - Close > Close[5]
+REM    - Dist EMA50 < 20%
 REM  Columnas (orden = Mom 5d % de mayor a menor):
 REM    Mom 5d %   — rendimiento 5 dias
 REM    RSI        — RSI actual
 REM    ADX        — fuerza de tendencia (14)
+REM    Breakout % — distancia % sobre el max de 20 sesiones previas
 REM    Ret 20d %  — retorno de 20 dias
 REM    ATR %      — volatilidad ATR normalizada
 REM    Vol Ratio  — volumen vs media 20d
@@ -45,6 +48,10 @@ valATRpct  = valATR / Close * 100
 valDistEMA = (Close - val50) / val50 * 100
 valSlope50 = (val50 - val50[5]) / val50[5] * 100
 
+REM ── Breakout: maximo de las 20 sesiones previas ────────────
+valHigh20 = Highest[20](Close)[1]
+valBreakout = (Close - valHigh20) / valHigh20 * 100
+
 REM ── Condiciones ────────────────────────────────────────────
 filtTrend    = val10 > val20 AND Close > val50
 filtTrend200 = Close > val200
@@ -56,7 +63,8 @@ filtVol      = valVolMA > 500000
 filtDollar   = valDollarVol > 5000000
 filtMom5     = Close > Close[5]
 filtNotOver  = valDistEMA < 20
+filtBreakout = Close > valHigh20
 
-filtAll = filtTrend AND filtTrend200 AND filtSlope AND filtQuality AND filtMoment AND filtPrice AND filtVol AND filtDollar AND filtMom5 AND filtNotOver
+filtAll = filtTrend AND filtTrend200 AND filtSlope AND filtQuality AND filtMoment AND filtPrice AND filtVol AND filtDollar AND filtMom5 AND filtNotOver AND filtBreakout
 
-SCREENER[filtAll](valMom5 AS "Mom 5d %", valRSI AS "RSI", valADX AS "ADX", valRet20 AS "Ret 20d %", valATRpct AS "ATR %", valVolRatio AS "Vol Ratio", valDistEMA AS "Dist EMA50 %")
+SCREENER[filtAll](valMom5 AS "Mom 5d %", valRSI AS "RSI", valADX AS "ADX", valBreakout AS "Breakout %", valRet20 AS "Ret 20d %", valATRpct AS "ATR %", valVolRatio AS "Vol Ratio", valDistEMA AS "Dist EMA50 %")
