@@ -1,0 +1,33 @@
+REM ═══════════════════════════════════════════════════════════
+REM  OUTLIER SCREENER v1 — ProRealTime ProScreener
+REM  Condiciones:
+REM    1. Tendencia alcista : EMA10 > EMA20 y Close > EMA50
+REM    2. Momentum          : RSI(14) > 55
+REM    3. Precio minimo     : Close > 10
+REM  Columnas de salida:
+REM    RSI     — valor RSI actual
+REM    DistEMA — distancia % del precio a la EMA50
+REM ═══════════════════════════════════════════════════════════
+
+TIMEFRAME(daily)
+
+REM ── Medias móviles ──────────────────────────────────────────
+val10 = ExponentialAverage[10](Close)
+val20 = ExponentialAverage[20](Close)
+val50 = ExponentialAverage[50](Close)
+
+REM ── RSI ─────────────────────────────────────────────────────
+valRSI = RSI[14](Close)
+
+REM ── Condiciones individuales ────────────────────────────────
+filtTrend  = val10 > val20 AND Close > val50
+filtMoment = valRSI > 55
+filtPrice  = Close > 10
+
+REM ── Filtro combinado ────────────────────────────────────────
+filtAll = filtTrend AND filtMoment AND filtPrice
+
+REM ── Columnas extra de información ───────────────────────────
+valDistEMA = (Close - val50) / val50 * 100
+
+SCREENER[filtAll](valRSI AS "RSI", valDistEMA AS "Dist EMA50 %")
