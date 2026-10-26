@@ -1,23 +1,7 @@
 REM ============================================================
-REM SCANNER: REVERSAL ALERT - NIVEL 1 - v1.0
+REM SCANNER: REVERSAL ALERT - NIVEL 1 - v1.1 (CORREGIDO)
 REM Plataforma: ProRealTime - ProScreener
 REM Periodo: DIARIO
-REM ------------------------------------------------------------
-REM OBJETIVO:
-REM Detectar avisos tempranos de giro de precio (1-5 dias).
-REM Es un scanner tactico: mas señales, mas ruido.
-REM 
-REM CAPAS:
-REM   A1 - Divergencia RSI
-REM   B1 - Histograma MACD girando
-REM   B2 - RSI cruzando nivel clave (30/70)
-REM   B3 - Estocastico cruzando desde extremo (20/80)
-REM   C3 - Vela de reversion con volumen
-REM
-REM Senal = Dir*10 + Score
-REM   Dir: 1=Bull, 2=Bear
-REM   Score: 0-5 (numero de capas activas)
-REM   Ej: 13 = Bull con 3 capas a favor
 REM ============================================================
 
 REM --- PARAMETROS ---
@@ -33,14 +17,15 @@ REM --- CALCULOS BASE ---
 rsiD = RSI[rsiPer](close)
 volAvg = Average[20](volume)
 
-REM --- CALCULOS MACD ---
-REM Si da error, cambia MACDline[12,26,9] por MACD[12,26] y añade ExponentialAverage[9](macdLine)
-macdLine = MACDline[12,26,9](close)
-macdSig = ExponentialAverage[9](macdLine)
-hist = macdLine - macdSig
+REM --- CALCULOS MACD (Evitando palabra reservada MACDline) ---
+ema12 = ExponentialAverage[12](close)
+ema26 = ExponentialAverage[26](close)
+macdMain = ema12 - ema26
+macdSig = ExponentialAverage[9](macdMain)
+hist = macdMain - macdSig
 
 REM --- CALCULOS ESTOCASTICO ---
-stochD = Stochastic[stochPer, stochSmooth](close)
+stochD = Stochastic[stochPer,stochSmooth](close)
 
 REM --- CAPA A1: Divergencia RSI ---
 bullDiv = close <= lowest[20](close) AND rsiD > rsiD[5]
