@@ -1,31 +1,41 @@
 # ADR-0002: Diseño del scanner Trend Change Confirmation
 
-**Fecha:** 2026-10-25
+**Fecha:** 2026-10-26
 **Estado:** Aceptado
-**Contexto:** Necesidad de detectar cambios de tendencia con más información que una señal binaria.
+**Contexto:** Necesidad de detectar cambios de tendencia con más información que una señal binaria, respetando las limitaciones técnicas y de licencia de ProRealTime (PRT).
 
 ## Decisión
 
-Implementar un scanner de 5 capas con scoring 0–5, clasificación en 4 fases y código de señal combinado (Dir*10 + Phase).
+Implementar un scanner de 5 capas con scoring 0–5, clasificación en 4 fases y código de señal combinado (`Dir*10 + Phase`).
 
 ## Capas elegidas
 
-- A2 (ADX cayendo): contexto de agotamiento.
-- C1 (BOS): ruptura de estructura, la señal más fiable.
-- C2 (fallo de ruptura): trampa de mercado, señal de alta convicción.
-- D1 (semanal Vervoort): confirmación de timeframe superior.
-- D2 (EMA200 slope): tendencia de fondo.
+- **A2 (ADX cayendo):** contexto de agotamiento. Sintaxis adaptada a `ADX[N]`.
+- **C1 (BOS):** ruptura de estructura, la señal más fiable.
+- **C2 (fallo de ruptura):** trampa de mercado, señal de alta convicción.
+- **D1 (semanal Vervoort):** confirmación de timeframe superior usando el muro Vervoort.
+- **D2 (pendiente EMA200):** tendencia de fondo. Sintaxis adaptada a `ExponentialAverage[N]`.
+
+## Restricciones técnicas y adaptaciones (v1.6)
+
+Durante la implementación en PRT, surgieron limitaciones que obligaron a ajustar el diseño original:
+
+1. **Límite de columnas:** A pesar de tener licencia completa, PRT limita la salida a 3 columnas visibles. Se descartaron las columnas individuales por capa y el `Stop`/`Target`. Salida final: `Senal`, `BullSc`, `BearSc`.
+2. **Error de variable no usada:** Al eliminar `Stop` y `Target` de la salida, PRT lanzaba error de compilación porque la variable `atrD` (ATR diario) se calculaba pero no se usaba. Se eliminó `atrD` del código.
+3. **Eliminación del filtro de mercado:** Se intentó implementar un filtro de régimen (SPY > EMA200) usando `EQUITYFRAME`. PRT rechaza esto si el screener se ejecuta en una lista de valores de otra bolsa (ej. Europa vs EE. UU.). Se eliminó para garantizar la compilación.
+4. **Sintaxis estricta:** PRT no reconoce `EMA` (se debe usar `ExponentialAverage`) ni acepta `ADX(close)` (se debe usar `ADX[N]`).
 
 ## Alternativas rechazadas
 
-- **Señal binaria única (solo BOS)**: demasiado ruido, sin contexto.
-- **Cruce MACD como señal principal**: lagea y da falsos positivos en rangos.
-- **RSI sobrevendido como señal**: RSI puede quedarse en 20 durante semanas.
-- **Un solo timeframe**: sin HTF, el scanner opera contra la tendencia mayor.
+- **Señal binaria única (solo BOS):** demasiado ruido, sin contexto.
+- **Cruce MACD como señal principal:** lagea y da falsos positivos en rangos.
+- **RSI sobrevendido como señal:** RSI puede quedarse en 20 durante semanas.
+- **Un solo timeframe:** sin HTF, el scanner opera contra la tendencia mayor.
+- **14 columnas:** rechazado por el límite de la licencia de PRT.
 
 ## Consecuencias
 
-- Más columnas de salida (14) que scanners anteriores.
-- Requiere interpretación, no es plug-and-play.
-- D2 lagea: muchos Bull sólidos aparecen como PrimerAviso, no Confirmado.
-- Depende del indicador Vervoort semanal.
+- El scanner requiere más interpretación que una señal binaria.
+- D2 (EMA200) lagea: muchos Bull sólidos aparecerán como *PrimerAviso* (2), no como *Confirmado* (3).
+- Depende del indicador Vervoort instalado para la capa D1.
+- Al tener solo 3 columnas, se pierde la vista granular de qué capa confirmó exactamente (hay que inferirlo por el score).
