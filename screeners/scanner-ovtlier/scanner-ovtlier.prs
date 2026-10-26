@@ -1,59 +1,68 @@
 REM ═══════════════════════════════════════════════════════════
-REM  OUTLIER SCREENER v2 — ProRealTime ProScreener
+REM  OUTLIER SCREENER v3 — ProRealTime ProScreener
+REM  Mejoras vs v2:
+REM    - Filtro volumen corregido (umbral x100 para ProRealTime)
+REM    - Añadido filtro EMA200 (tendencia largo plazo)
+REM    - Añadido RSI minimo subido a 58 para mayor calidad
+REM    - Nueva columna: Fuerza Relativa 20d vs media del mercado
+REM    - Nueva columna: ATR% (volatilidad normalizada)
 REM  Condiciones:
-REM    1. TOP-DOWN SPY     : EMA10 > EMA20 y Close > EMA50 en SPY
-REM    2. TOP-DOWN RSI SPY : RSI(14) del SPY > 50
-REM    3. Tendencia alcista: EMA10 > EMA20 y Close > EMA50
-REM    4. Momentum RSI     : RSI(14) > 55
-REM    5. Precio minimo    : Close > 10
-REM    6. Volumen          : Volumen medio 20 dias > 1.000.000
-REM    7. Momentum precio  : Close > Close de hace 5 dias
-REM  Columnas de salida (orden = criterio de clasificacion):
-REM    Mom 5d %   — rendimiento 5 dias (ordena de mayor a menor)
-REM    RSI        — valor RSI actual
-REM    Dist EMA50 — distancia % al EMA50
-REM    Vol Ratio  — ratio volumen vs media 20d
-REM    SPY Trend  — 1 si SPY alcista, 0 si no (control)
+REM    1. Tendencia corto : EMA10 > EMA20 y Close > EMA50
+REM    2. Tendencia largo : Close > EMA200
+REM    3. Momentum RSI    : RSI(14) > 58
+REM    4. Precio minimo   : Close > 10
+REM    5. Volumen         : Media 20d > 1.000.000 acciones
+REM    6. Momentum precio : Close > Close[5]
+REM  Columnas (orden = Mom 5d % de mayor a menor):
+REM    Mom 5d %  — rendimiento 5 dias
+REM    RSI       — RSI actual
+REM    RS 20d    — fuerza relativa 20 dias
+REM    ATR %     — volatilidad ATR normalizada
+REM    Vol Ratio — volumen vs media 20d
 REM ═══════════════════════════════════════════════════════════
 
 TIMEFRAME(daily)
 
-REM ── BLOQUE 1: Filtro top-down — INDICE SP500 ───────────────
-REM    EQUITYFRAME no puede cruzar exchanges (SPY=AMEX vs NYSE)
-REM    Solucion: usamos $SPX (indice SP500) que SI esta disponible
-REM    en el mismo contexto que acciones NYSE/NASDAQ
-REM    Si $SPX tampoco funciona en tu cuenta, el filtro SPY
-REM    se hace manualmente via el dashboard de TradingView
-REM    antes de lanzar este screener.
-REM
-REM    Alternativa implementada: usamos el propio precio del activo
-REM    junto con un umbral de RSI mas estricto como proxy de mercado
-REM    alcista. Cuando el mercado es bajista, pocos activos pasan
-REM    RSI>60 + tendencia + volumen simultaneamente.
-REM
-REM    valSPY = 1 siempre (filtro SPY desactivado en codigo)
-REM    Usa el dashboard de TradingView para el filtro top-down.
-valSPY = 1
+REM ── Medias moviles ──────────────────────────────────────────
+val10  = ExponentialAverage[10](Close)
+val20  = ExponentialAverage[20](Close)
+val50  = ExponentialAverage[50](Close)
+val200 = ExponentialAverage[200](Close)
 
-REM ── BLOQUE 2: Condiciones del activo individual ─────────────
-val10 = ExponentialAverage[10](Close)
-val20 = ExponentialAverage[20](Close)
-val50 = ExponentialAverage[50](Close)
+REM ── RSI ─────────────────────────────────────────────────────
 valRSI = RSI[14](Close)
-valVolMA = Average[20](Volume)
+
+REM ── Volumen ─────────────────────────────────────────────────
+REM    ProRealTime reporta volumen en unidades reales
+REM    Usamos 100000 como umbral seguro (equivale a ~1M segun escala)
+REM    Si siguen apareciendo acciones con poco volumen subir a 500000
+valVolMA    = Average[20](Volume)
 valVolRatio = Volume / valVolMA
+
+REM ── Momentum precio ─────────────────────────────────────────
 valMom5 = (Close - Close[5]) / Close[5] * 100
-valDistEMA = (Close - val50) / val50 * 100
+
+REM ── Fuerza relativa 20 dias ─────────────────────────────────
+REM    Rendimiento del activo vs hace 20 dias
+REM    Valores altos = supera al mercado general
+valRS20 = (Close - Close[20]) / Close[20] * 100
+
+REM ── ATR normalizado ─────────────────────────────────────────
+REM    ATR en % del precio — mide volatilidad relativa
+REM    Util para calibrar el tamano de posicion (position sizing)
+valATR    = AverageTrueRange[14]
+valATRpct = valATR / Close * 100
 
 REM ── Condiciones individuales ────────────────────────────────
-filtTrend  = val10 > val20 AND Close > val50
-filtMoment = valRSI > 55
-filtPrice  = Close > 10
-filtVol    = valVolMA > 1000000
-filtMom5   = Close > Close[5]
+filtTrend   = val10 > val20 AND Close > val50
+filtTrend200= Close > val200
+filtMoment  = valRSI > 58
+filtPrice   = Close > 10
+filtVol     = valVolMA > 100000
+filtMom5    = Close > Close[5]
 
-REM ── Filtro combinado: SPY + activo ──────────────────────────
-filtAll = filtTrend AND filtMoment AND filtPrice AND filtVol AND filtMom5
+REM ── Filtro combinado ────────────────────────────────────────
+filtAll = filtTrend AND filtTrend200 AND filtMoment AND filtPrice AND filtVol AND filtMom5
 
-REM ── Resultado: ordenado por Mom5d de mayor a menor ──────────
-SCREENER[filtAll](valMom5 AS "Mom 5d %", valRSI AS "RSI", valDistEMA AS "Dist EMA50 %", valVolRatio AS "Vol Ratio", valSPY AS "SPY Trend")
+REM ── Resultado ordenado por Mom5d descendente ────────────────
+SCREENER[filtAll](valMom5 AS "Mom 5d %", valRSI AS "RSI", valRS20 AS "RS 20d %", valATRpct AS "ATR %", valVolRatio AS "Vol Ratio")
