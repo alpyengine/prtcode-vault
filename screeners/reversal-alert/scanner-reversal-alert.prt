@@ -1,0 +1,125 @@
+REM ============================================================
+REM SCANNER: REVERSAL ALERT - NIVEL 1 - v1.0
+REM Plataforma: ProRealTime - ProScreener
+REM Periodo: DIARIO
+REM ------------------------------------------------------------
+REM OBJETIVO:
+REM Detectar avisos tempranos de giro de precio (1-5 dias).
+REM Es un scanner tactico: mas señales, mas ruido.
+REM 
+REM CAPAS:
+REM   A1 - Divergencia RSI
+REM   B1 - Histograma MACD girando
+REM   B2 - RSI cruzando nivel clave (30/70)
+REM   B3 - Estocastico cruzando desde extremo (20/80)
+REM   C3 - Vela de reversion con volumen
+REM
+REM Senal = Dir*10 + Score
+REM   Dir: 1=Bull, 2=Bear
+REM   Score: 0-5 (numero de capas activas)
+REM   Ej: 13 = Bull con 3 capas a favor
+REM ============================================================
+
+REM --- PARAMETROS ---
+rsiPer = 14
+stochPer = 14
+stochSmooth = 3
+volMult = 1.5
+minScore = 2
+minPrice = 0.5
+minAvgVol = 100000
+
+REM --- CALCULOS BASE ---
+rsiD = RSI[rsiPer](close)
+volAvg = Average[20](volume)
+
+REM --- CALCULOS MACD ---
+REM Si da error, cambia MACDline[12,26,9] por MACD[12,26] y añade ExponentialAverage[9](macdLine)
+macdLine = MACDline[12,26,9](close)
+macdSig = ExponentialAverage[9](macdLine)
+hist = macdLine - macdSig
+
+REM --- CALCULOS ESTOCASTICO ---
+stochD = Stochastic[stochPer, stochSmooth](close)
+
+REM --- CAPA A1: Divergencia RSI ---
+bullDiv = close <= lowest[20](close) AND rsiD > rsiD[5]
+bearDiv = close >= highest[20](close) AND rsiD < rsiD[5]
+
+REM --- CAPA B1: MACD Histograma girando ---
+bullMACD = hist[1] < 0 AND hist > hist[1]
+bearMACD = hist[1] > 0 AND hist < hist[1]
+
+REM --- CAPA B2: RSI cruzando nivel clave ---
+bullRSI = rsiD CROSSES OVER 30
+bearRSI = rsiD CROSSES UNDER 70
+
+REM --- CAPA B3: Estocastico cruzando desde extremo ---
+bullStoch = stochD CROSSES OVER 20 AND stochD[1] < 20
+bearStoch = stochD CROSSES UNDER 80 AND stochD[1] > 80
+
+REM --- CAPA C3: Vela de reversion con volumen ---
+bullRev = close > open AND close > high[1] AND volume > volAvg * volMult
+bearRev = close < open AND close < low[1] AND volume > volAvg * volMult
+
+REM --- SCORING BULL ---
+bullScore = 0
+IF bullDiv THEN
+   bullScore = bullScore + 1
+ENDIF
+IF bullMACD THEN
+   bullScore = bullScore + 1
+ENDIF
+IF bullRSI THEN
+   bullScore = bullScore + 1
+ENDIF
+IF bullStoch THEN
+   bullScore = bullScore + 1
+ENDIF
+IF bullRev THEN
+   bullScore = bullScore + 1
+ENDIF
+
+REM --- SCORING BEAR ---
+bearScore = 0
+IF bearDiv THEN
+   bearScore = bearScore + 1
+ENDIF
+IF bearMACD THEN
+   bearScore = bearScore + 1
+ENDIF
+IF bearRSI THEN
+   bearScore = bearScore + 1
+ENDIF
+IF bearStoch THEN
+   bearScore = bearScore + 1
+ENDIF
+IF bearRev THEN
+   bearScore = bearScore + 1
+ENDIF
+
+REM --- DIRECCION DOMINANTE ---
+Dir = 0
+IF bullScore >= minScore AND bullScore > bearScore THEN
+   Dir = 1
+ENDIF
+IF bearScore >= minScore AND bearScore > bullScore THEN
+   Dir = 2
+ENDIF
+
+REM --- CODIGO COMBINADO (Dir*10 + Score) ---
+Senal = 0
+IF Dir = 1 THEN
+   Senal = 10 + bullScore
+ENDIF
+IF Dir = 2 THEN
+   Senal = 20 + bearScore
+ENDIF
+
+REM --- FILTROS FINALES ---
+condPrice = close > minPrice
+condLiq = volAvg > minAvgVol
+anyDir = Dir > 0
+
+REM --- SALIDA (3 columnas) ---
+SCREENER[anyDir AND condPrice AND condLiq](Senal AS "Senal", bullScore AS "BullSc", bearScore AS "BearSc")
