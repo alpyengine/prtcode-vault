@@ -1,8 +1,10 @@
-REM ===== PUERTA B - Giro semanal - ProScreener - v1 (26-oct-2026) =====
+REM ===== PUERTA B - Giro semanal - ProScreener - v1.1 (07-nov-2026) =====
+REM v1.1: anadida la condicion de la regla D (ADR-0002): el cuerpo entero de la
+REM       semana 0 (wkBodyLow) debe quedar sobre la linea ANTIGUA (semana -2).
+REM       Igual que la senal 1 del scanner ATR Trailing v1.2.
 REM Periodo de la interfaz: Diario. Lista: acciones (o ETF si la licencia los muestra).
-REM Senal: la semana anterior cerro por primera vez sobre la linea ATR semanal x1.5
-REM        y la semana actual lo confirma (cierra tambien encima).
-REM        Semana -2 en la linea o debajo / semana -1 encima / semana 0 encima.
+REM Senal: semana -2 en la linea o debajo / semana -1 encima / semana 0 encima
+REM        y cuerpo de la semana 0 sobre la linea de la semana -2.
 REM Sin vela de fuerza diaria (la puerta B es solo semanal).
 REM Columnas: ATR14 diario, distancia % a la linea semanal, volumen / media 20.
 
@@ -30,12 +32,13 @@ ENDIF
 wo = 1 - semanaCerrada
 wkClose = close[wo]
 wkLine = lineW[wo]
+wkBodyLow = MIN(open[wo], close[wo])
 wkPrevClose = close[wo + 1]
 wkPrevLine = lineW[wo + 1]
 wkOldClose = close[wo + 2]
 wkOldLine = lineW[wo + 2]
 
-senalB = wkOldClose <= wkOldLine AND wkPrevClose > wkPrevLine AND wkClose > wkLine
+senalB = wkOldClose <= wkOldLine AND wkPrevClose > wkPrevLine AND wkClose > wkLine AND wkBodyLow > wkOldLine
 
 REM --- BLOQUE DIARIO: columnas ---
 TIMEFRAME(default)
