@@ -1,0 +1,74 @@
+REM ===== PUERTA A - Retroceso - ProScreener - v1 (26-oct-2026) =====
+REM Periodo de la interfaz: Diario. Lista: acciones (o ETF si la licencia los muestra).
+REM Senal: el minimo toca o perfora la EMA20 diaria o la linea ATR diaria x2,
+REM        el cierre queda encima, vela de fuerza y tendencia semanal OK.
+REM Tendencia: cierre semanal sobre la linea ATR semanal x1.5 (Vervoort, ATR 14).
+REM Columnas: ATR14 diario, distancia % a la linea semanal, volumen / media 20.
+REM El cierre lo muestra la propia tabla de ProScreener.
+
+REM --- PARAMETROS ---
+REM semanaCerrada: 1 = pasada del sabado / 0 = entre semana (ultima semana cerrada)
+semanaCerrada = 0
+atrPer = 14
+multW = 1.5
+multD = 2.0
+emaPer = 20
+volPer = 20
+
+REM --- BLOQUE SEMANAL: linea Vervoort con trinquete ---
+TIMEFRAME(weekly)
+atrW = AverageTrueRange[atrPer](close)
+IF lineW[1] = 0 THEN
+   lineW = close
+ELSIF close > lineW[1] AND close[1] > lineW[1] THEN
+   lineW = MAX(lineW[1], close - multW * atrW)
+ELSIF close < lineW[1] AND close[1] < lineW[1] THEN
+   lineW = MIN(lineW[1], close + multW * atrW)
+ELSIF close > lineW[1] THEN
+   lineW = close - multW * atrW
+ELSE
+   lineW = close + multW * atrW
+ENDIF
+wo = 1 - semanaCerrada
+wkClose = close[wo]
+wkLine = lineW[wo]
+
+REM --- BLOQUE DIARIO ---
+TIMEFRAME(default)
+atrD = AverageTrueRange[atrPer](close)
+IF lineD[1] = 0 THEN
+   lineD = close
+ELSIF close > lineD[1] AND close[1] > lineD[1] THEN
+   lineD = MAX(lineD[1], close - multD * atrD)
+ELSIF close < lineD[1] AND close[1] < lineD[1] THEN
+   lineD = MIN(lineD[1], close + multD * atrD)
+ELSIF close > lineD[1] THEN
+   lineD = close - multD * atrD
+ELSE
+   lineD = close + multD * atrD
+ENDIF
+
+e20 = ExponentialAverage[emaPer](close)
+tendW = wkClose > wkLine AND close > wkLine
+fuerza = close > open AND close > high[1]
+
+REM Nivel de la linea diaria = el de ayer (soporte vigente antes de la vela de hoy)
+lvlD = lineD[1]
+toqueEma = low <= e20 AND close > e20
+toqueLin = close[1] > lvlD AND low <= lvlD AND close > lvlD
+senalA = tendW AND fuerza AND (toqueEma OR toqueLin)
+
+REM --- COLUMNAS ---
+volAvg = Average[volPer](volume)
+IF volAvg > 0 THEN
+   volRel = volume / volAvg
+ELSE
+   volRel = 0
+ENDIF
+IF wkLine > 0 THEN
+   distW = (close - wkLine) / wkLine
+ELSE
+   distW = 0
+ENDIF
+
+SCREENER[senalA](atrD AS "ATR14", distW AS "DistMuro" PERCENTFORMAT, volRel AS "VolRel")

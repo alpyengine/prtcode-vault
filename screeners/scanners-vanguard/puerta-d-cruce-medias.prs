@@ -1,0 +1,71 @@
+REM ===== PUERTA D - Cruce de medias - ProScreener - v1.1 (26-oct-2026) =====
+REM v1.1: vela entera sobre la media cruzada; quitada la rama "conf"
+REM       (EMA20 cruza EMA50), que dejaba pasar senales sin vela de fuerza;
+REM       filtro semanal sobre la ultima semana cerrada (semanaCerrada);
+REM       modo acciones con la linea ATR semanal x1.5; columnas comunes.
+REM Periodo de la interfaz: Diario.
+REM Lista ETF (esETF = 1): VGT VFH VAW VXUS VYM VHT VDC SCHD VIG VTV
+REM Lista acciones en prueba (esETF = 0).
+REM Senal: el cierre cruza al alza la EMA20 o la EMA50 diaria (ayer debajo,
+REM        hoy encima), con la vela entera sobre esa media y vela de fuerza.
+REM Filtro: cierre semanal sobre la MM50 semanal y la MM50 subiendo.
+REM         Acciones: ademas, cierre semanal sobre la linea ATR semanal x1.5.
+REM Columnas: ATR14 diario, distancia % a la linea semanal, volumen / media 20.
+
+REM --- PARAMETROS ---
+REM esETF: 1 = lista de ETF / 0 = lista de acciones
+esETF = 1
+REM semanaCerrada: 1 = pasada del sabado / 0 = entre semana (ultima semana cerrada)
+semanaCerrada = 0
+atrPer = 14
+multW = 1.5
+mmPer = 50
+volPer = 20
+
+REM --- BLOQUE SEMANAL: MM50 y linea Vervoort con trinquete ---
+TIMEFRAME(weekly)
+mm50s = Average[mmPer](close)
+atrW = AverageTrueRange[atrPer](close)
+IF lineW[1] = 0 THEN
+   lineW = close
+ELSIF close > lineW[1] AND close[1] > lineW[1] THEN
+   lineW = MAX(lineW[1], close - multW * atrW)
+ELSIF close < lineW[1] AND close[1] < lineW[1] THEN
+   lineW = MIN(lineW[1], close + multW * atrW)
+ELSIF close > lineW[1] THEN
+   lineW = close - multW * atrW
+ELSE
+   lineW = close + multW * atrW
+ENDIF
+wo = 1 - semanaCerrada
+wkClose = close[wo]
+wkLine = lineW[wo]
+filtroMM = wkClose > mm50s[wo] AND mm50s[wo] > mm50s[wo + 1]
+
+REM --- BLOQUE DIARIO ---
+TIMEFRAME(default)
+atrD = AverageTrueRange[atrPer](close)
+tendW = wkClose > wkLine AND close > wkLine
+filtro = filtroMM AND (esETF = 1 OR tendW)
+
+e20 = ExponentialAverage[20](close)
+e50 = ExponentialAverage[50](close)
+fuerza = close > open AND close > high[1]
+cruce20 = close CROSSES OVER e20 AND low > e20
+cruce50 = close CROSSES OVER e50 AND low > e50
+senalD = filtro AND fuerza AND (cruce20 OR cruce50)
+
+REM --- COLUMNAS ---
+volAvg = Average[volPer](volume)
+IF volAvg > 0 THEN
+   volRel = volume / volAvg
+ELSE
+   volRel = 0
+ENDIF
+IF wkLine > 0 THEN
+   distW = (close - wkLine) / wkLine
+ELSE
+   distW = 0
+ENDIF
+
+SCREENER[senalD](atrD AS "ATR14", distW AS "DistMuro" PERCENTFORMAT, volRel AS "VolRel")

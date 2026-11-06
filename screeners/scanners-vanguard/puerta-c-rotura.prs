@@ -1,0 +1,57 @@
+REM ===== PUERTA C - Rotura - ProScreener - v1 (26-oct-2026) =====
+REM Sustituye a "Scanner momentum puerta C v1" (20-oct-2026).
+REM Periodo de la interfaz: Diario. Lista: acciones (o ETF si la licencia los muestra).
+REM Senal: cierre sobre el maximo de los 20 dias previos, vela entera (minimo
+REM        incluido) sobre ese maximo, vela de fuerza, volumen > media 20
+REM        y tendencia semanal OK (cierre sobre la linea ATR semanal x1.5).
+REM Columnas: ATR14 diario, distancia % a la linea semanal, volumen / media 20.
+
+REM --- PARAMETROS ---
+REM semanaCerrada: 1 = pasada del sabado / 0 = entre semana (ultima semana cerrada)
+semanaCerrada = 0
+atrPer = 14
+multW = 1.5
+boPer = 20
+volPer = 20
+
+REM --- BLOQUE SEMANAL: linea Vervoort con trinquete ---
+TIMEFRAME(weekly)
+atrW = AverageTrueRange[atrPer](close)
+IF lineW[1] = 0 THEN
+   lineW = close
+ELSIF close > lineW[1] AND close[1] > lineW[1] THEN
+   lineW = MAX(lineW[1], close - multW * atrW)
+ELSIF close < lineW[1] AND close[1] < lineW[1] THEN
+   lineW = MIN(lineW[1], close + multW * atrW)
+ELSIF close > lineW[1] THEN
+   lineW = close - multW * atrW
+ELSE
+   lineW = close + multW * atrW
+ENDIF
+wo = 1 - semanaCerrada
+wkClose = close[wo]
+wkLine = lineW[wo]
+
+REM --- BLOQUE DIARIO ---
+TIMEFRAME(default)
+atrD = AverageTrueRange[atrPer](close)
+tendW = wkClose > wkLine AND close > wkLine
+fuerza = close > open AND close > high[1]
+hiN = Highest[boPer](high)
+maxPrev = hiN[1]
+volAvg = Average[volPer](volume)
+senalC = tendW AND fuerza AND close > maxPrev AND low > maxPrev AND volume > volAvg
+
+REM --- COLUMNAS ---
+IF volAvg > 0 THEN
+   volRel = volume / volAvg
+ELSE
+   volRel = 0
+ENDIF
+IF wkLine > 0 THEN
+   distW = (close - wkLine) / wkLine
+ELSE
+   distW = 0
+ENDIF
+
+SCREENER[senalC](atrD AS "ATR14", distW AS "DistMuro" PERCENTFORMAT, volRel AS "VolRel")
