@@ -1,13 +1,14 @@
-REM ===== PUERTA D - Cruce de medias - ProScreener - v1.1 (26-oct-2026) =====
-REM v1.1: vela entera sobre la media cruzada; quitada la rama "conf"
-REM       (EMA20 cruza EMA50), que dejaba pasar senales sin vela de fuerza;
-REM       filtro semanal sobre la ultima semana cerrada (semanaCerrada);
-REM       modo acciones con la linea ATR semanal x1.5; columnas comunes.
+REM ===== PUERTA D - Cruce de medias - ProScreener - v1.2 (07-nov-2026) =====
+REM v1.2: el cruce ya no tiene que ser en la misma vela que la vela entera.
+REM       Ventana de cruceLook sesiones: el cierre cruzo al alza la EMA20 (o la
+REM       EMA50) hoy o en las 2 sesiones anteriores. Hoy: vela de fuerza y vela
+REM       entera sobre esa media. Solo la primera vela que lo cumple tras el
+REM       cruce (sin repetir). Columna DiasCruce preparada para 6 columnas.
+REM v1.1: vela entera sobre la media cruzada; quitada la rama "conf";
+REM       filtro semanal sobre la ultima semana cerrada; modo acciones.
 REM Periodo de la interfaz: Diario.
 REM Lista ETF (esETF = 1): VGT VFH VAW VXUS VYM VHT VDC SCHD VIG VTV
 REM Lista acciones en prueba (esETF = 0).
-REM Senal: el cierre cruza al alza la EMA20 o la EMA50 diaria (ayer debajo,
-REM        hoy encima), con la vela entera sobre esa media y vela de fuerza.
 REM Filtro: cierre semanal sobre la MM50 semanal y la MM50 subiendo.
 REM         Acciones: ademas, cierre semanal sobre la linea ATR semanal x1.5.
 REM Columnas: ATR14 diario, distancia % a la linea semanal, volumen / media 20.
@@ -21,6 +22,8 @@ atrPer = 14
 multW = 1.5
 mmPer = 50
 volPer = 20
+REM cruceLook: sesiones de la ventana (3 = hoy y las 2 anteriores)
+cruceLook = 3
 
 REM --- BLOQUE SEMANAL: MM50 y linea Vervoort con trinquete ---
 TIMEFRAME(weekly)
@@ -51,9 +54,37 @@ filtro = filtroMM AND (esETF = 1 OR tendW)
 e20 = ExponentialAverage[20](close)
 e50 = ExponentialAverage[50](close)
 fuerza = close > open AND close > high[1]
-cruce20 = close CROSSES OVER e20 AND low > e20
-cruce50 = close CROSSES OVER e50 AND low > e50
-senalD = filtro AND fuerza AND (cruce20 OR cruce50)
+
+REM Sesiones desde el ultimo cruce al alza (d = 0 el dia del cruce).
+REM hecho = 1 cuando ya se dio la senal tras ese cruce (no repetir).
+IF BarIndex = 0 THEN
+   d20 = 99
+   d50 = 99
+ENDIF
+IF close CROSSES OVER e20 THEN
+   d20 = 0
+   hecho20 = 0
+ELSE
+   d20 = d20 + 1
+ENDIF
+IF close CROSSES OVER e50 THEN
+   d50 = 0
+   hecho50 = 0
+ELSE
+   d50 = d50 + 1
+ENDIF
+
+REM Vela entera sobre la media (low > media) implica cierre sobre la media.
+ok20 = d20 < cruceLook AND hecho20 = 0 AND fuerza AND low > e20
+ok50 = d50 < cruceLook AND hecho50 = 0 AND fuerza AND low > e50
+IF ok20 THEN
+   hecho20 = 1
+ENDIF
+IF ok50 THEN
+   hecho50 = 1
+ENDIF
+
+senalD = filtro AND (ok20 OR ok50)
 
 REM --- COLUMNAS ---
 volAvg = Average[volPer](volume)
@@ -67,5 +98,17 @@ IF wkLine > 0 THEN
 ELSE
    distW = 0
 ENDIF
+REM --- Solo version 6 columnas ---
+REM [6COL] IF ok20 THEN
+REM [6COL]    diasC = d20
+REM [6COL] ELSE
+REM [6COL]    diasC = d50
+REM [6COL] ENDIF
 
+REM --- Version 3 columnas (licencia gratuita) ---
 SCREENER[senalD](atrD AS "ATR14", distW AS "DistMuro" PERCENTFORMAT, volRel AS "VolRel")
+
+REM --- Version 6 columnas ---
+REM Para activarla: quita "REM [6COL] " de las lineas marcadas, borra la linea
+REM SCREENER de arriba y quita el REM de la linea de abajo.
+REM SCREENER[senalD](atrD AS "ATR14", distW AS "DistMuro" PERCENTFORMAT, volRel AS "VolRel", diasC AS "DiasCruce")
