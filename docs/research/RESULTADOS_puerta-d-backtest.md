@@ -1,4 +1,4 @@
-<!-- RESULTADOS_puerta-d-backtest · v1.1 · 2026-11-08 -->
+<!-- RESULTADOS_puerta-d-backtest · v1.3 · 2026-11-08 -->
 
 # Resultados — Backtest puerta D
 
@@ -59,3 +59,18 @@ Unas 3 operaciones al año por ETF. Los importes en $ no se usan para comparar: 
 ### Pendiente
 
 Matriz de 4 pruebas en VGT y VHT: emaSube 0/1 × salida 2/3.
+
+### Matriz v2 (VGT y VHT)
+
+| Prueba | emaSube | salida | VGT ops / gan / ratio | VHT ops / gan / ratio |
+|---|---|---|---|---|
+| A | 0 | 2 | 51 / 47 % / 1,98 | 38 / 47 % / 2,13 |
+| B | 1 | 2 | 35 / 40 % / 1,27 | 26 / 54 % / 2,95 |
+| C | 0 | 3 | 19 / 42 % / 0,94 | 18 / 50 % / 1,34 |
+| D | 1 | 3 | 28 / 46 % / 1,10 | 21 / 57 % / 2,29 |
+
+### Conclusión de la matriz (2026-11-09)
+
+- **Salida:** la 2 (vela entera bajo la EMA50) gana a la 3 (ATR semanal ×2) en las 4 comparaciones. Se elige la salida 2.
+- **EMA50 subiendo:** resultado mixto. En VGT empeora (1,98 → 1,27) y en VHT mejora (2,13 → 2,95). Sin decidir.
+- Siguiente: pruebas A y B en IBB, IVV y PAVE para decidir EMA50 subiendo. Mientras, el scanner sigue en v1.3.
