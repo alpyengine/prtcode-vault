@@ -1,4 +1,4 @@
-<!-- RESULTADOS_puerta-d-backtest · v1.0 · 2026-11-08 -->
+<!-- RESULTADOS_puerta-d-backtest · v1.1 · 2026-11-08 -->
 
 # Resultados — Backtest puerta D
 
@@ -35,3 +35,27 @@ Unas 3 operaciones al año por ETF. Los importes en $ no se usan para comparar: 
 1. Filtro semanal real con `TIMEFRAME(weekly)`.
 2. Interruptor "EMA50 subiendo".
 3. Salidas a elegir: 20 sesiones / vela entera bajo la EMA50 / cierre semanal bajo la línea ATR ×2.
+
+## v2 (2026-11-08)
+
+**Configuración:** filtro semanal real (`TIMEFRAME(weekly)`, última semana cerrada). `emaSube = 1` (EMA50 subiendo). `salida = 3` (cierre semanal bajo la línea ATR ×2). 1 acción por operación.
+
+**Hallazgo:** `TIMEFRAME(weekly)` compila y funciona en ProBacktest.
+
+| ETF | Operaciones | Ganadoras | Ratio | Tiempo en mercado |
+|---|---|---|---|---|
+| VGT | 28 | 46 % | 1,10 | 29 % |
+| IBB | 16 | 44 % | 3,08 | 26 % |
+| IVV | 27 | 41 % | 0,70 | 33 % |
+| PAVE | 15 | 47 % | 1,24 | 16 % |
+| VHT | 21 | 57 % | 2,29 | 32 % |
+
+### Lectura
+
+- Cambian tres cosas a la vez respecto a v1 (filtro, EMA50 subiendo y salida). No se puede saber cuál mejora o empeora.
+- Menos operaciones y menos % de ganadoras: es normal con una salida de tendencia.
+- IVV pasa a perder (ratio 0,70). VHT pasa a ganar (2,29).
+
+### Pendiente
+
+Matriz de 4 pruebas en VGT y VHT: emaSube 0/1 × salida 2/3.
