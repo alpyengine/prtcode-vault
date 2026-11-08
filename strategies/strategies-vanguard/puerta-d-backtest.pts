@@ -1,0 +1,45 @@
+REM ===== PUERTA D - Backtest - ProBacktest - v1 (07-nov-2026) =====
+REM Misma senal que el scanner puerta D v1.3 (solo EMA50, ventana 3).
+REM Entrada: compra a la apertura del dia siguiente a la senal.
+REM Salida: vende a las "dias" sesiones (20 = igual que la prueba hecha).
+REM Filtro semanal APROXIMADO en diario: MM250 diaria = MM50 semanal,
+REM   y "subiendo" = mayor que hace 5 sesiones. Sin el muro ATR (modo ETF).
+REM Uso: pegar en ProBacktest, un ticker cada vez, grafico diario,
+REM      periodo de prueba lo mas largo posible.
+
+DEFPARAM CumulateOrders = False
+
+REM --- PARAMETROS ---
+emaPer = 50
+cruceLook = 3
+dias = 20
+
+REM --- FILTRO DE TENDENCIA (aproximado) ---
+mmLargo = Average[250](close)
+filtro = close > mmLargo AND mmLargo > mmLargo[5]
+
+REM --- SENAL (igual que el scanner) ---
+e50 = ExponentialAverage[emaPer](close)
+fuerza = close > open AND close > high[1]
+IF BarIndex = 0 THEN
+   d50 = 99
+ENDIF
+IF close CROSSES OVER e50 THEN
+   d50 = 0
+   hecho50 = 0
+ELSE
+   d50 = d50 + 1
+ENDIF
+ok50 = d50 < cruceLook AND hecho50 = 0 AND fuerza AND low > e50
+IF ok50 THEN
+   hecho50 = 1
+ENDIF
+senal = filtro AND ok50
+
+REM --- ORDENES ---
+IF NOT ONMARKET AND senal THEN
+   BUY 1 SHARES AT MARKET
+ENDIF
+IF ONMARKET AND BarIndex - TRADEINDEX(1) >= dias THEN
+   SELL 1 SHARES AT MARKET
+ENDIF
