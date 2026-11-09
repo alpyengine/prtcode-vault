@@ -1,4 +1,4 @@
-<!-- RESULTADOS_puerta-a-backtest · v1.2 · 2026-11-09 -->
+<!-- RESULTADOS_puerta-a-backtest · v1.3 · 2026-11-09 -->
 
 # Resultados — Backtest puerta A
 
@@ -39,4 +39,17 @@
 - IVV, que era el ETF flojo en la puerta D (0,93), es el mejor aquí (2,06). Las puertas A y D se complementan.
 - Perfil: tendencial. Pocas ganadoras en IBB y VHT (32-33 %), pero ganan mucho más de lo que pierden.
 - **Se mantiene el scanner A en v1.1.** Salida de trabajo: 3 (cierre bajo la línea ATR diaria).
-- Pendiente: probar en acciones con `esETF = 0`.
+
+### Prueba en acciones NYSE (`esETF = 0`, salida 3)
+
+| Acción | Operaciones | Ganadoras | Ratio | Tiempo en mercado |
+|---|---|---|---|---|
+| JPM | 21 | 48 % | 1,08 | 5 % |
+| KO | 37 | 35 % | 0,58 | 12 % |
+| CAT | 22 | 27 % | 0,32 | 5 % |
+
+### Decisión acciones (2026-11-09)
+
+- En acciones la puerta A con salida 3 **no funciona**: 2 de 3 pierden y JPM apenas gana.
+- Causa probable: en acciones la línea ATR diaria es x2 (más ajustada que x2,5 de ETF) y las acciones se mueven más. La salida corta las operaciones demasiado pronto (5 % del tiempo en mercado).
+- La puerta A queda **validada solo para ETF**. En acciones, pendiente de probar otra salida (2 o 4).
