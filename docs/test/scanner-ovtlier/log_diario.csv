@@ -1,6 +1,6 @@
 fecha,version,num_resultados,top1,top2,top3,top4,top5,notas
-2026-11-02,v6,133,CVNA,GPN,MHK,CWK,TRN,SPY>EMA200 (Luz verde). Universo: US NYSE Stocks.
-2026-11-02,v7a,85,CVNA,TRN,GM,RCL,PPG,SPY>EMA200 (Luz verde). Universo: US NYSE Stocks.
+2026-11-02,v6,133,CVNA,GPN,MHK,CWK,TRN,SPY>EMA200 (Luz verde). Evaluación 5d: 4 WIN, 3 FLAT, 3 LOSS.
+2026-11-02,v7a,85,CVNA,TRN,GM,RCL,PPG,SPY>EMA200 (Luz verde). Evaluación 5d: 5 WIN, 4 FLAT, 1 LOSS.
 2026-11-03,v6,133,CVNA,GPN,MHK,CWK,TRN,Día rojo. Lista idéntica a ayer. Precios bajaron.
 2026-11-03,v7a,85,CVNA,TRN,GM,RCL,PPG,Día rojo. Lista idéntica a ayer. Precios bajaron.
 2026-11-04,v6,42,MIR,APAM,FLS,APG,ONON,Rotación de líderes. Fuerte caída de resultados.
@@ -9,3 +9,5 @@ fecha,version,num_resultados,top1,top2,top3,top4,top5,notas
 2026-11-05,v7a,109,TRN,SARO,KBH,APAM,FHI,v7a descarta los valores más sobre-estirados (HGV, CVNA).
 2026-11-06,v6,45,GDDY,CALY,TPR,RYN,RYAN,Fin Semana 1. Rotación a defensivas (Consumo/Salud).
 2026-11-06,v7a,29,CLX,DEO,YUMC,VIPS,RLI,Fin Semana 1. Rotación a defensivas. Solapamiento 3/10.
+2026-11-09,v6,28,RKT,HLF,PAR,SARO,LOAR,Inicio Semana 2. Fuerte rotación (Financieras/Industriales).
+2026-11-09,v7a,19,CLX,EW,FBIN,QSR,CAH,Inicio Semana 2. Solapamiento Top 10: 4/10.
