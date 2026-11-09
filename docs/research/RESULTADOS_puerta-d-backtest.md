@@ -1,4 +1,4 @@
-<!-- RESULTADOS_puerta-d-backtest · v1.3 · 2026-11-08 -->
+<!-- RESULTADOS_puerta-d-backtest · v1.5 · 2026-11-09 -->
 
 # Resultados — Backtest puerta D
 
@@ -74,3 +74,28 @@ Matriz de 4 pruebas en VGT y VHT: emaSube 0/1 × salida 2/3.
 - **Salida:** la 2 (vela entera bajo la EMA50) gana a la 3 (ATR semanal ×2) en las 4 comparaciones. Se elige la salida 2.
 - **EMA50 subiendo:** resultado mixto. En VGT empeora (1,98 → 1,27) y en VHT mejora (2,13 → 2,95). Sin decidir.
 - Siguiente: pruebas A y B en IBB, IVV y PAVE para decidir EMA50 subiendo. Mientras, el scanner sigue en v1.3.
+
+### Decisión EMA50 subiendo (salida 2) — IBB, IVV, PAVE
+
+| Prueba | emaSube | IBB ops / gan / ratio | IVV ops / gan / ratio | PAVE ops / gan / ratio |
+|---|---|---|---|---|
+| A | 0 | 18 / 44 % / 2,39 | 30 / 33 % / 0,93 | 13 / 31 % / 1,84 |
+| B | 1 | 21 / 57 % / 1,89 | 31 / 52 % / 0,73 | 12 / 75 % / 4,49 |
+
+### Comparativa A vs B en los 5 ETF (salida 2)
+
+| ETF | A ops / gan / ratio | B ops / gan / ratio | Mejor |
+|---|---|---|---|
+| VGT | 51 / 47 % / 1,98 | 35 / 40 % / 1,27 | A |
+| VHT | 38 / 47 % / 2,13 | 26 / 54 % / 2,95 | B |
+| IBB | 18 / 44 % / 2,39 | 21 / 57 % / 1,89 | A en ratio, B en % |
+| IVV | 30 / 33 % / 0,93 | 31 / 52 % / 0,73 | A en ratio, B en % |
+| PAVE | 13 / 31 % / 1,84 | 12 / 75 % / 4,49 | B |
+
+### Decisión (2026-11-09)
+
+- "EMA50 subiendo" sube el % de ganadoras en 4 de 5 ETF, pero el ratio solo mejora en 2 de 5. Sin ventaja clara.
+- **No se añade al scanner. Se queda en v1.3.**
+- Salida elegida: 2 (vela entera bajo la EMA50).
+- IVV pierde o queda flojo en ambas pruebas. La puerta D encaja mal en ETF muy amplios.
+- Dato a vigilar: IBB en A (18 ops) y B (21 ops). Con más filtro no debería haber más operaciones. Puede ser un efecto de la secuencia de operaciones, o que el PDF de A sea de otra prueba. Revisar si se quiere cerrar el dato.
