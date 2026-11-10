@@ -1,4 +1,4 @@
-<!-- RESUMEN_puertas-vanguard · v1.1 · 2026-11-10 -->
+<!-- RESUMEN_puertas-vanguard · v2.0 · 2026-11-10 -->
 
 # Resumen — Puertas Vanguard (matriz homogénea)
 
@@ -30,7 +30,7 @@ ETF: VGT, VHT, IBB, IVV, PAVE. Acciones: JPM, KO, CAT, MSFT, AAPL, AMGN.
 
 | Puerta | Salida a) ETF | Salida a) acciones | Salida b) ETF | Salida b) acciones |
 |---|---|---|---|---|
-| A retroceso | 4 de 5 | 1 de 6 | 2 de 5 | 2 de 6 |
+| A retroceso | 4 de 5 | 1 de 6 | 1 de 5 | 2 de 6 |
 | B giro semanal | 3 de 5 | 4 de 6 | 5 de 5 | 5 de 6 |
 | C rotura | 4 de 5 | 4 de 6 | 4 de 5 | 3 de 6 |
 | D cruce de medias | 4 de 5 | 1 de 6 | 5 de 5 | 4 de 6 |
@@ -50,11 +50,35 @@ Comparado con 23 informes de PRT (1 acción por operación):
 
 - Operaciones: 19 de 23 dentro de ±2. Ratio: 22 de 23 dentro del 25 %.
 - Coincidencia exacta o casi exacta en la puerta B (5 ETF), la puerta C (4 de 5), la A en VGT, PAVE, JPM y CAT, y la D en VGT y VHT.
-- **Cuatro diferencias:** D en IBB, IVV y PAVE (PRT dio 18, 30 y 13 operaciones; Python 27, 50 y 24) y A en IBB (33 contra 36).
-- Los PDF de D en IBB, IVV y PAVE son dudosos: en PRT salían menos operaciones con `emaSube = 0` que con `emaSube = 1`, cosa que no puede pasar. Pendiente de control en PRT.
+- **Control D v3 en PRT (10-nov):** IBB 28 operaciones (Python 27), IVV 50 (50), PAVE 24 (24). Ratios 1,98 / 1,94 / 2,15. Los PDF antiguos de D eran erróneos; el motor queda validado.
+- **Única diferencia abierta:** A en IBB (PRT 33, Python 36). Pendiente de control con A v1.1.
+
+## Corrección (v2.0)
+
+La puerta A con la salida b) en ETF gana en **1 de 5** valores (PAVE), no en 2. IBB en T2 sale con un ratio de 1,002, que cuenta como no ganador.
+
+## Ronda 2 (10-nov-2026): 20 ETF y 40 acciones
+
+Detalle completo en `RESULTADOS_ronda2.md`. Motor Python, 10.000 $ por operación, todas las operaciones sumadas por grupo. Regresión previa: 12 de 12 filas idénticas a la matriz anterior.
+
+**Criterio** (ratio > 1,5 en conjunto y > 1 en T1 y T2, con ≥ 30 operaciones por grupo y tramo). Ninguna combinación tiene muestra insuficiente.
+
+| Puerta | ETF con la salida elegida | Acciones con la salida elegida |
+|---|---|---|
+| A retroceso | NO CUMPLE (1,29) | NO CUMPLE (1,24) |
+| B giro semanal | **CUMPLE** (1,63) | **CUMPLE** (1,70) |
+| C rotura | NO CUMPLE (1,36) | **CUMPLE** (1,78) |
+| D cruce de medias | NO CUMPLE (1,42) | **CUMPLE** (1,63) |
+
+- **B es la más estable:** cumple en ETF y en acciones con las salidas a), b) y c).
+- **D** cumple en acciones con las 4 salidas, y en ETF con b) y c).
+- **A** solo cumple en ETF con las salidas b) y c).
+- **C** no cumple en ETF con ninguna salida. En acciones depende de CAT (26 % de la ganancia).
+- **Variantes de stop c) y d): no se adoptan.** Ninguna mejora el ratio de b) en los cuatro casos (ETF y acciones, T1 y T2).
+- **Concentración:** A en ETF depende de XLE (41 %) y C en ETF de VGT (29 %).
 
 ## Pendiente
 
-1. Repetir en PRT la D (`esETF = 1`, `emaSube = 0`, `salida = 2`) en IBB, IVV y PAVE. Python espera 27, 50 y 24 operaciones.
-2. Ampliar la lista de valores (test 2) con más ETF y acciones.
-3. Implementar la salida de sistema en PRT (hoy solo está en Python).
+1. Repetir en PRT la A v1.1 (`esETF = 1`, salida 3) en IBB. Python espera 36 operaciones.
+2. Decidir si se lleva la salida de sistema (stop, objetivo y mitad a +2R) a los `.pts`. Hoy solo está en Python y la ronda 2 no la favorece frente a la salida elegida.
+3. Contrastar la lista de 40 acciones con un listado oficial de capitalización de 2010.
