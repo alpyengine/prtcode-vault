@@ -1,0 +1,72 @@
+REM ===== PUERTA C - Rotura - ProScreener - v1.1 (09-nov-2026) =====
+REM v1.1: interruptor esETF (ETF: filtro MM50 semanal subiendo; acciones: linea
+REM       ATR semanal x1.5). Volumen de hoy contra la media de ayer (volAvg[1]),
+REM       y VolRel calculado igual.
+REM v1: version inicial (sustituye a "Scanner momentum puerta C v1").
+REM Periodo de la interfaz: Diario.
+REM Guarda DOS copias en PRT y no cambies mas el numero:
+REM   "puerta_C_ETF" con esETF = 1 -> lista de ETF
+REM   "puerta_C_ACC" con esETF = 0 -> lista de acciones NYSE
+REM Senal: cierre sobre el maximo de los 20 dias previos, vela entera (minimo
+REM        incluido) sobre ese maximo, vela de fuerza, volumen > media 20 de ayer
+REM        y tendencia semanal OK.
+REM Tendencia: ETF = cierre semanal sobre la MM50 semanal y la MM50 subiendo.
+REM            Acciones = ademas, cierre semanal sobre la linea ATR semanal x1.5.
+REM Columnas: ATR14 diario, distancia % a la linea semanal, volumen / media 20.
+
+REM --- PARAMETROS ---
+REM esETF: 1 = lista de ETF / 0 = lista de acciones
+esETF = 0
+REM semanaCerrada: 1 = pasada del sabado / 0 = entre semana (ultima semana cerrada)
+semanaCerrada = 0
+atrPer = 14
+multW = 1.5
+mmPer = 50
+boPer = 20
+volPer = 20
+
+REM --- BLOQUE SEMANAL: linea Vervoort con trinquete ---
+TIMEFRAME(weekly)
+mm50s = Average[mmPer](close)
+atrW = AverageTrueRange[atrPer](close)
+IF lineW[1] = 0 THEN
+   lineW = close
+ELSIF close > lineW[1] AND close[1] > lineW[1] THEN
+   lineW = MAX(lineW[1], close - multW * atrW)
+ELSIF close < lineW[1] AND close[1] < lineW[1] THEN
+   lineW = MIN(lineW[1], close + multW * atrW)
+ELSIF close > lineW[1] THEN
+   lineW = close - multW * atrW
+ELSE
+   lineW = close + multW * atrW
+ENDIF
+wo = 1 - semanaCerrada
+wkClose = close[wo]
+wkLine = lineW[wo]
+filtroMM = wkClose > mm50s[wo] AND mm50s[wo] > mm50s[wo + 1]
+
+REM --- BLOQUE DIARIO ---
+TIMEFRAME(default)
+atrD = AverageTrueRange[atrPer](close)
+tendW = wkClose > wkLine AND close > wkLine
+filtro = filtroMM AND (esETF = 1 OR tendW)
+fuerza = close > open AND close > high[1]
+hiN = Highest[boPer](high)
+maxPrev = hiN[1]
+volAvg = Average[volPer](volume)
+volPrev = volAvg[1]
+senalC = filtro AND fuerza AND close > maxPrev AND low > maxPrev AND volume > volPrev
+
+REM --- COLUMNAS ---
+IF volPrev > 0 THEN
+   volRel = volume / volPrev
+ELSE
+   volRel = 0
+ENDIF
+IF wkLine > 0 THEN
+   distW = (close - wkLine) / wkLine
+ELSE
+   distW = 0
+ENDIF
+
+SCREENER[senalC](atrD AS "ATR14", distW AS "DistMuro" PERCENTFORMAT, volRel AS "VolRel")

@@ -1,0 +1,92 @@
+REM ===== PUERTA D - Cruce de media - ProScreener - v1.3 (07-nov-2026) =====
+REM v1.3: solo EMA50. Se quita la EMA20 (en la prueba de 12 meses la EMA20
+REM       daba mas senales y de peor calidad). Resto igual que v1.2.
+REM v1.2: ventana de cruceLook sesiones; vela entera y de fuerza hoy; sin repetir.
+REM v1.1: vela entera sobre la media; quitada la rama "conf"; semana cerrada.
+REM Periodo de la interfaz: Diario.
+REM Guarda DOS copias en PRT y no cambies mas el numero:
+REM   "puerta_D_ETF" con esETF = 1 -> lista de ETF
+REM   "puerta_D_ACC" con esETF = 0 -> lista de acciones NYSE
+REM Senal: el cierre cruzo al alza la EMA50 diaria hoy o en las 2 sesiones
+REM        anteriores. Hoy: vela de fuerza y vela entera sobre la EMA50.
+REM        Solo la primera vela que lo cumple tras el cruce.
+REM Filtro: cierre semanal sobre la MM50 semanal y la MM50 subiendo.
+REM         Acciones: ademas, cierre semanal sobre la linea ATR semanal x1.5.
+REM Columnas: ATR14 diario, distancia % a la linea semanal, volumen / media 20.
+
+REM --- PARAMETROS ---
+REM esETF: 1 = lista de ETF / 0 = lista de acciones
+esETF = 1
+REM semanaCerrada: 1 = pasada del sabado / 0 = entre semana (ultima semana cerrada)
+semanaCerrada = 0
+atrPer = 14
+multW = 1.5
+mmPer = 50
+emaPer = 50
+volPer = 20
+REM cruceLook: sesiones de la ventana (3 = hoy y las 2 anteriores)
+cruceLook = 3
+
+REM --- BLOQUE SEMANAL: MM50 y linea Vervoort con trinquete ---
+TIMEFRAME(weekly)
+mm50s = Average[mmPer](close)
+atrW = AverageTrueRange[atrPer](close)
+IF lineW[1] = 0 THEN
+   lineW = close
+ELSIF close > lineW[1] AND close[1] > lineW[1] THEN
+   lineW = MAX(lineW[1], close - multW * atrW)
+ELSIF close < lineW[1] AND close[1] < lineW[1] THEN
+   lineW = MIN(lineW[1], close + multW * atrW)
+ELSIF close > lineW[1] THEN
+   lineW = close - multW * atrW
+ELSE
+   lineW = close + multW * atrW
+ENDIF
+wo = 1 - semanaCerrada
+wkClose = close[wo]
+wkLine = lineW[wo]
+filtroMM = wkClose > mm50s[wo] AND mm50s[wo] > mm50s[wo + 1]
+
+REM --- BLOQUE DIARIO ---
+TIMEFRAME(default)
+atrD = AverageTrueRange[atrPer](close)
+tendW = wkClose > wkLine AND close > wkLine
+filtro = filtroMM AND (esETF = 1 OR tendW)
+
+e50 = ExponentialAverage[emaPer](close)
+fuerza = close > open AND close > high[1]
+
+REM Sesiones desde el ultimo cruce al alza (d50 = 0 el dia del cruce).
+REM hecho50 = 1 cuando ya se dio la senal tras ese cruce (no repetir).
+IF BarIndex = 0 THEN
+   d50 = 99
+ENDIF
+IF close CROSSES OVER e50 THEN
+   d50 = 0
+   hecho50 = 0
+ELSE
+   d50 = d50 + 1
+ENDIF
+
+REM Vela entera sobre la media (low > e50) implica cierre sobre la media.
+ok50 = d50 < cruceLook AND hecho50 = 0 AND fuerza AND low > e50
+IF ok50 THEN
+   hecho50 = 1
+ENDIF
+
+senalD = filtro AND ok50
+
+REM --- COLUMNAS ---
+volAvg = Average[volPer](volume)
+IF volAvg > 0 THEN
+   volRel = volume / volAvg
+ELSE
+   volRel = 0
+ENDIF
+IF wkLine > 0 THEN
+   distW = (close - wkLine) / wkLine
+ELSE
+   distW = 0
+ENDIF
+
+SCREENER[senalD](atrD AS "ATR14", distW AS "DistMuro" PERCENTFORMAT, volRel AS "VolRel", d50 AS "DiasCruce")
