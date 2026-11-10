@@ -1,8 +1,9 @@
-REM ===== PUERTA B - Backtest - ProBacktest - v1 (10-nov-2026) =====
+REM ===== PUERTA B - Backtest - ProBacktest - v1.1 (10-nov-2026) =====
 REM Senal: igual que el scanner puerta B v1.1 (giro semanal con la regla
 REM        del cuerpo sobre la linea antigua, ADR-0002).
 REM La senal es semanal: se compra una sola vez, a la apertura del primer
 REM dia despues de cerrar la semana de la senal.
+REM v1.1: numeracion de salidas unificada (sin cambios de logica).
 REM Uso: grafico DIARIO, un ticker cada vez, periodo lo mas largo posible.
 
 DEFPARAM CumulateOrders = False
