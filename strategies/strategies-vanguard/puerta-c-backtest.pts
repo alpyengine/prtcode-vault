@@ -1,9 +1,10 @@
-REM ===== PUERTA C - Backtest - ProBacktest - v1 (10-nov-2026) =====
+REM ===== PUERTA C - Backtest - ProBacktest - v1.1 (10-nov-2026) =====
 REM Senal: igual que el scanner puerta C v1.1 (rotura del maximo de 20 dias,
 REM        vela entera y de fuerza, volumen sobre la media de ayer,
 REM        filtro semanal).
 REM Filtro semanal real con TIMEFRAME(weekly), ultima semana cerrada.
 REM Entrada: compra a la apertura del dia siguiente a la senal.
+REM v1.1: salida por defecto = 4 (elegida tras la matriz en 5 ETF).
 REM Uso: grafico DIARIO, un ticker cada vez, periodo lo mas largo posible.
 
 DEFPARAM CumulateOrders = False
@@ -16,7 +17,7 @@ REM salida: 1 = a las "dias" sesiones
 REM         2 = vela entera por debajo de la EMA20 (maximo < EMA20)
 REM         3 = cierre por debajo de la linea ATR diaria
 REM         4 = vela entera por debajo de la EMA50
-salida = 3
+salida = 4
 dias = 20
 atrPer = 14
 multW = 1.5
