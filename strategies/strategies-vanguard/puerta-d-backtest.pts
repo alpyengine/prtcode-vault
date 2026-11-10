@@ -1,4 +1,7 @@
-REM ===== PUERTA D - Backtest - ProBacktest - v2 (08-nov-2026) =====
+REM ===== PUERTA D - Backtest - ProBacktest - v3 (10-nov-2026) =====
+REM v3: numeracion de salidas unificada con A, B y C (1 dias, 2 EMA20,
+REM     3 linea ATR diaria, 4 EMA50). Salida por defecto = 4, emaSube = 0.
+REM     La salida semanal x2 antigua se elimina.
 REM v2: filtro semanal REAL con TIMEFRAME(weekly), igual que el scanner v1.3
 REM     (ultima semana cerrada). Interruptor emaSube (EMA50 subiendo).
 REM     Salidas a elegir con "salida". Modo acciones con esETF = 0.
@@ -6,8 +9,6 @@ REM v1: filtro aproximado MM250 diaria, salida fija a 20 sesiones.
 REM Senal: igual que el scanner puerta D v1.3 (solo EMA50, ventana 3).
 REM Entrada: compra a la apertura del dia siguiente a la senal.
 REM Uso: grafico DIARIO, un ticker cada vez, periodo lo mas largo posible.
-REM AVISO: TIMEFRAME en ProBacktest no esta en la referencia de la skill.
-REM        Si no compila, avisa y volvemos al filtro aproximado.
 
 DEFPARAM CumulateOrders = False
 
@@ -15,17 +16,23 @@ REM --- PARAMETROS (cambia solo estos numeros) ---
 REM esETF: 1 = ETF (solo MM50 semanal) / 0 = accion (ademas, sobre el muro)
 esETF = 1
 REM emaSube: 1 = exige EMA50 subiendo (hoy > hace 5 sesiones) / 0 = no
-emaSube = 1
+emaSube = 0
 REM salida: 1 = a las "dias" sesiones
-REM         2 = vela entera por debajo de la EMA50 (maximo < EMA50)
-REM         3 = cierre semanal por debajo de la linea ATR semanal x2
-salida = 3
+REM         2 = vela entera por debajo de la EMA20 (maximo < EMA20)
+REM         3 = cierre por debajo de la linea ATR diaria
+REM         4 = vela entera por debajo de la EMA50
+salida = 4
 dias = 20
 atrPer = 14
 multW = 1.5
-multSal = 2.0
 mmPer = 50
 emaPer = 50
+emaCorta = 20
+IF esETF = 1 THEN
+   multD = 2.5
+ELSE
+   multD = 2.0
+ENDIF
 cruceLook = 3
 
 REM --- BLOQUE SEMANAL ---
@@ -44,24 +51,11 @@ ELSIF close > lineA[1] THEN
 ELSE
    lineA = close + multW * atrW
 ENDIF
-REM Linea Vervoort x2 (salida 3)
-IF lineB[1] = 0 THEN
-   lineB = close
-ELSIF close > lineB[1] AND close[1] > lineB[1] THEN
-   lineB = MAX(lineB[1], close - multSal * atrW)
-ELSIF close < lineB[1] AND close[1] < lineB[1] THEN
-   lineB = MIN(lineB[1], close + multSal * atrW)
-ELSIF close > lineB[1] THEN
-   lineB = close - multSal * atrW
-ELSE
-   lineB = close + multSal * atrW
-ENDIF
 REM Siempre la ultima semana CERRADA (sin mirar el futuro)
 wkClose = close[1]
 wkMM = mm50s[1]
 wkMMprev = mm50s[2]
 wkLineA = lineA[1]
-wkLineB = lineB[1]
 
 REM --- BLOQUE DIARIO ---
 TIMEFRAME(default)
@@ -69,6 +63,20 @@ filtroMM = wkClose > wkMM AND wkMM > wkMMprev
 tendW = wkClose > wkLineA AND close > wkLineA
 filtro = filtroMM AND (esETF = 1 OR tendW)
 
+atrD = AverageTrueRange[atrPer](close)
+IF lineD[1] = 0 THEN
+   lineD = close
+ELSIF close > lineD[1] AND close[1] > lineD[1] THEN
+   lineD = MAX(lineD[1], close - multD * atrD)
+ELSIF close < lineD[1] AND close[1] < lineD[1] THEN
+   lineD = MIN(lineD[1], close + multD * atrD)
+ELSIF close > lineD[1] THEN
+   lineD = close - multD * atrD
+ELSE
+   lineD = close + multD * atrD
+ENDIF
+lvlD = lineD[1]
+e20 = ExponentialAverage[emaCorta](close)
 e50 = ExponentialAverage[emaPer](close)
 fuerza = close > open AND close > high[1]
 sube = e50 > e50[5]
@@ -90,9 +98,10 @@ senal = filtro AND ok50 AND (emaSube = 0 OR sube)
 
 REM --- SALIDAS ---
 salTiempo = (salida = 1) AND (BarIndex - TRADEINDEX(1) >= dias)
-salEma = (salida = 2) AND (high < e50)
-salMuro = (salida = 3) AND (wkClose < wkLineB)
-salir = salTiempo OR salEma OR salMuro
+salEma20 = (salida = 2) AND (high < e20)
+salLinea = (salida = 3) AND (close < lvlD)
+salEma50 = (salida = 4) AND (high < e50)
+salir = salTiempo OR salEma20 OR salLinea OR salEma50
 
 REM --- ORDENES ---
 IF NOT ONMARKET AND senal THEN
