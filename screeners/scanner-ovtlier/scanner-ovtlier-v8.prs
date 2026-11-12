@@ -1,0 +1,60 @@
+REM ═══════════════════════════════════════════════════════════
+REM  OUTLIER SCREENER v8 — ProRealTime ProScreener
+REM  PERFIL: PULLBACK + REPETICION (Testeo personal)
+REM ═══════════════════════════════════════════════════════════
+
+TIMEFRAME(daily)
+
+REM ── Medias moviles ──────────────────────────────────────────
+val10  = ExponentialAverage[10](Close)
+val20  = ExponentialAverage[20](Close)
+val50  = ExponentialAverage[50](Close)
+val200 = ExponentialAverage[200](Close)
+
+REM ── Momentum, volatilidad y fuerza de tendencia ────────────
+valRSI = RSI[14](Close)
+valADX = ADX[14]
+valATR = AverageTrueRange[14](Close)
+
+REM ── Liquidez ───────────────────────────────────────────────
+valVolMA     = Average[20](Volume)
+valVolRatio  = Volume / valVolMA
+valDollarVol = valVolMA * Close
+
+REM ── Rendimientos, distancias y pendiente ───────────────────
+valMom5    = (Close - Close[5])  / Close[5]  * 100
+valRet20   = (Close - Close[20]) / Close[20] * 100
+valATRpct  = valATR / Close * 100
+valSlope50 = (val50 - val50[5]) / val50[5] * 100
+
+REM ── Distancias a las medias ────────────────────────────────
+valDistEMA50 = (Close - val50) / val50 * 100
+valDistEMA20 = (Close - val20) / val20 * 100
+
+REM ── Breakout: maximo de las 20 sesiones previas ────────────
+valHigh20   = Highest[20](Close)[1]
+valBreakout = (Close - valHigh20) / valHigh20 * 100
+
+REM ── Condiciones base ───────────────────────────────────────
+filtTrend    = val10 > val20 AND Close > val50
+filtTrend200 = Close > val200
+filtSlope    = valSlope50 > 0
+filtQuality  = valADX > 25
+filtMoment   = valRSI > 60
+filtPrice    = Close > 10
+filtVol      = valVolMA > 500000
+filtDollar   = valDollarVol > 10000000
+filtMom5     = Close > Close[5]
+filtBreakout = Close > valHigh20
+
+REM ── Cercanía a la EMA20 (-2% a +8%) ────────────────────────
+filtNotOver  = valDistEMA20 > -2 AND valDistEMA20 < 8
+
+REM ── Unimos las condiciones ─────────────────────────────────
+filtAll = filtTrend AND filtTrend200 AND filtSlope AND filtQuality AND filtMoment AND filtPrice AND filtVol AND filtDollar AND filtMom5 AND filtNotOver AND filtBreakout
+
+REM ── Repetición (3 días seguidos) ───────────────────────────
+filtRepeticion = filtAll AND filtAll[1] AND filtAll[2]
+
+REM ── SCREENER (Todas las columnas disponibles) ──────────────
+SCREENER[filtRepeticion](valMom5 AS "Mom 5d %", valRSI AS "RSI", valADX AS "ADX", valBreakout AS "Breakout %", valRet20 AS "Ret 20d %", valATRpct AS "ATR %", valATR AS "ATR $", valVolRatio AS "Vol Ratio", valDistEMA50 AS "Dist EMA50 %", valDistEMA20 AS "Dist EMA20 %")
