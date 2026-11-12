@@ -1,4 +1,4 @@
-<!-- RESULTADOS_ronda2 · v1.0 · 2026-11-10 -->
+<!-- RESULTADOS_ronda2 · v1.1 · 2026-11-12 -->
 
 # Resultados — Ronda 2 (puertas A, B, C y D)
 
@@ -25,7 +25,7 @@ Repetidos 3 casos de la matriz anterior con el motor nuevo: B en VGT, C en JPM, 
 - **40 acciones** (`esETF = 0`): XOM, AAPL, MSFT, WMT, GE, GOOGL, CVX, JNJ, WFC, IBM, PG, JPM, T, KO, PFE, C, BAC, CSCO, ORCL, INTC, PEP, VZ, MRK, HD, AMZN, CMCSA, MCD, ABT, SLB, COP, QCOM, UNH, DIS, AMGN, MMM, UPS, OXY, HPQ, CAT, BRK.B.
 - **Twelve Data tiene los 60 valores.** No falta ninguno.
 - **Historial corto:** VXUS empieza el 28-ene-2011 y SCHD el 20-oct-2011. Tienen menos operaciones en T1; su tiempo en mercado se mide sobre sus sesiones.
-- **Aviso sobre la lista de acciones:** la elegí de memoria como las mayores de EE. UU. por capitalización en 2010. No la he contrastado con un listado oficial. Incluye las que han ido mal (GE, C, BAC, INTC, HPQ, PFE).
+- **Lista de acciones contrastada (12-nov-2026)** con el ranking de valor de mercado de Fortune 500 de 2009 (datos del 27-mar-2009, 50 primeras). **35 de las 40 coinciden.** Las 5 que no están en ese top 50 son C, AMZN, SLB, UNH y CAT. Citigroup figura entre las 15 mayores en 2010 según otro ranking, y las otras 4 son grandes empresas de aquellos años pero algo más pequeñas. En cambio, el ranking incluye 15 empresas que no tengo: PM, GS, V, MO, CVS, UTX, BMY, GILD, LLY, MDT, BK, MON, KFT, WYE y SGP (las tres últimas ya no cotizan). Se mantiene la lista tal cual. Incluye las que han ido mal (GE, C, BAC, INTC, HPQ, PFE).
 - **Sesgo de supervivencia:** Twelve Data solo ofrece valores que cotizan hoy. No hay empresas quebradas ni excluidas del mercado.
 - Los precios salen ajustados por splits (sin saltos artificiales). Los mayores movimientos diarios son reales (por ejemplo, petróleo en marzo de 2020).
 

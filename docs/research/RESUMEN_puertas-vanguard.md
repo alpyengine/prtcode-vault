@@ -1,4 +1,4 @@
-<!-- RESUMEN_puertas-vanguard · v2.0 · 2026-11-10 -->
+<!-- RESUMEN_puertas-vanguard · v2.2 · 2026-11-12 -->
 
 # Resumen — Puertas Vanguard (matriz homogénea)
 
@@ -51,7 +51,7 @@ Comparado con 23 informes de PRT (1 acción por operación):
 - Operaciones: 19 de 23 dentro de ±2. Ratio: 22 de 23 dentro del 25 %.
 - Coincidencia exacta o casi exacta en la puerta B (5 ETF), la puerta C (4 de 5), la A en VGT, PAVE, JPM y CAT, y la D en VGT y VHT.
 - **Control D v3 en PRT (10-nov):** IBB 28 operaciones (Python 27), IVV 50 (50), PAVE 24 (24). Ratios 1,98 / 1,94 / 2,15. Los PDF antiguos de D eran erróneos; el motor queda validado.
-- **Única diferencia abierta:** A en IBB (PRT 33, Python 36). Pendiente de control con A v1.1.
+- **A en IBB:** la diferencia de 33 frente a 36 operaciones sigue sin explicar con el periodo completo. Control de A v1.1 en PRT (12-nov), desde 31-ene-2024: PRT 8 operaciones, Python 9. Las 5 pérdidas (−16,03 $), la mejor (+39,37 $) y la peor (−6,01 $) coinciden exactamente. La diferencia es una operación ganadora abierta que PRT no cuenta. Motor validado en ese periodo.
 
 ## Corrección (v2.0)
 
@@ -77,8 +77,23 @@ Detalle completo en `RESULTADOS_ronda2.md`. Motor Python, 10.000 $ por operació
 - **Variantes de stop c) y d): no se adoptan.** Ninguna mejora el ratio de b) en los cuatro casos (ETF y acciones, T1 y T2).
 - **Concentración:** A en ETF depende de XLE (41 %) y C en ETF de VGT (29 %).
 
+## ETF de Vanguard (10-nov-2026): 55 ETF
+
+Detalle en `RESULTADOS_etf-vanguard.md`. Salida a) y b), mismo criterio de la ronda 2, por grupos.
+
+| Grupo | A | B | C | D |
+|---|---|---|---|---|
+| Renta variable EE.UU. (17) | b) cumple | **a) y b) cumplen** | a) y b) cumplen | b) cumple |
+| Sectores EE.UU. (11) | no | b) cumple | no | no |
+| Internacional (11) | no | no | no | no |
+| Renta fija (16) | no | no | no | no |
+
+- **El núcleo está en renta variable de EE. UU.** y la puerta B es la más sólida (cumple con las dos salidas).
+- **Internacional y renta fija no cumplen con ninguna puerta.**
+- Por ETF, cumplen con B 23 de 55, con D 14, con C 12 y con A 9. Hay mucho solapamiento entre ETF parecidos (VTI, VOO, VV), así que no son resultados independientes.
+- VIOO venía sin ajustar por un split 2:1 (mar-2023). Corregido.
+
 ## Pendiente
 
-1. Repetir en PRT la A v1.1 (`esETF = 1`, salida 3) en IBB. Python espera 36 operaciones.
-2. Decidir si se lleva la salida de sistema (stop, objetivo y mitad a +2R) a los `.pts`. Hoy solo está en Python y la ronda 2 no la favorece frente a la salida elegida.
-3. Contrastar la lista de 40 acciones con un listado oficial de capitalización de 2010.
+1. Decidir si se lleva la salida de sistema (stop, objetivo y mitad a +2R) a los `.pts`. Decisión del 12-nov: **se deja fuera**. La ronda 2 no la favorece frente a la salida elegida.
+2. La lista de 40 acciones se contrastó con Fortune 500 de 2009 (35 de 40 coinciden) y se deja como está.
