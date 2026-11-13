@@ -1,0 +1,3 @@
+ticker;puerta;fecha;cierre;ATR14;stop
+VGT;B;2026-04-17;100.70;2.01;95.68
+VGT;C;2026-04-17;100.70;2.01;95.68
