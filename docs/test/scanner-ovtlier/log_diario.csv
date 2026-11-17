@@ -17,3 +17,5 @@ fecha,version,num_resultados,top1,top2,top3,top4,top5,notas
 2026-11-13,v7a,14,ATEN,TEVA,JNJ,NI,DTE,Día 9. Fin Semana 2. Solapamiento 3/10 (ATEN, CLX, AEO).
 2026-11-16,v6,32,CLX,KVYO,EW,COLD,KR,Día 10. Evaluación Día 6: v7a captura 3 WINs clave (CLX, CAH, G).
 2026-11-16,v7a,25,COLD,KR,CAH,NI,JNJ,Día 10. v7a saca un gran rendimiento medio frente a v6.
+2026-11-17,v6,43,MOH,ACM,ATEN,TSN,HUM,Día 11. Evaluación Día 7: HLF (v6) y GFI (ambas) dieron buenos retornos.
+2026-11-17,v7a,29,MOH,TSN,ALL,RCI,KR,Día 11. v7a sufrió más LOSSes (CMG, SVV, TPR) pero mantuvo el Top 5 estable.
