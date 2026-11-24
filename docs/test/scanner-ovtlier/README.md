@@ -1,7 +1,7 @@
 # Test Outlier v6 vs v7a — Protocolo
 
 **Inicio:** 2026-11-03
-**Fin previsto:** 2026-11-24 (inicio + 21 días naturales)
+**Fin previsto:** 2026-12-04 (Extendido 1 semana por festivos de Thanksgiving y baja muestra de datos)
 **Universo:** US NYSE Stocks
 **Timeframe:** Diario
 **Ejecución:** Fin de sesión (mismo horario cada día)
