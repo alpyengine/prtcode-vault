@@ -27,3 +27,5 @@ fecha,version,num_resultados,top1,top2,top3,top4,top5,notas
 2026-11-20,v7a,7,TSN,BIP,RCI,HRL,IBN,Día 14. Solapamiento Top 10: 7/10. ATEN vuelve a dar un WIN masivo.
 2026-11-23,v6,13,BIPC,TSN,BIP,RCI,HDB,Día 15. Semana final. BIP da un gran WIN (+12.89%).
 2026-11-23,v7a,10,TSN,BIP,RCI,HRL,IBN,Día 15. Semana final. v7a sufre por las suspendidas en la lista.
+2026-11-24,v6,18,BIP,BIPC,ALH,VVV,A,Día 16. Evaluación Día 12: ATEN y RCI dan WINs para v6. TSN falla.
+2026-11-24,v7a,14,ALH,VVV,A,GME,TGT,Día 16. v7a cierra un día muy plano (muchos FLATs). v8 solo IBN.
